@@ -13,4 +13,4 @@ An attempt to port YYTK for MSL.
 
 ## Make commands
 
-`make run`
+`make run VAR=path/to/exe`

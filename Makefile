@@ -83,10 +83,10 @@ build_msan:
 endif
 
 debug: clean build_debug
-	gdb -ex 'break main' -ex 'run -c' .\build\msl_yyc.exe
+	gdb -ex 'break main' -ex 'run $(VAR)' .\build\msl_yyc.exe
 
 run: clean build_release
-	.\build\msl_yyc.exe
+	.\build\msl_yyc.exe $(VAR)
 
 ### CLEAN ###
 clean:

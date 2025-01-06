@@ -12,20 +12,18 @@
 
 int main(int argc, char** argv) 
 {
-    for (int i = 1; i < argc; i++)
-	{
-		printf("[>] Args[%d] %s\n", i, argv[i]);
+    size_t buf_size = 0;
+    char* buf = NULL;
+
+    if (argc == 1) 
+    {
+        ERR(pe_load, "data/StoneShard.exe", &buf, &buf_size);
     }
-
-    size_t buf_win_size = 0;
-    size_t buf_exe_size = 0;
-    char* buf_win = NULL;
-    char* buf_exe = NULL;
-
-    ERR(pe_load, "data/gog_0.9.1.3.win", &buf_win, &buf_win_size);
-    ERR(pe_load, "data/StoneShard.exe", &buf_exe, &buf_exe_size);
-    ERR(pe_parse, buf_win);
-    ERR(pe_parse, buf_exe);
+    else
+    {
+        ERR(pe_load, argv[1], &buf, &buf_size);
+    }
+    ERR(pe_parse, buf);
 
     // Initialize decoder context
     ZydisDecoder decoder;
@@ -41,12 +39,12 @@ int main(int argc, char** argv)
     // visualize relative addressing
     ZyanU64 runtime_address = 0x0;
     ZyanUSize offset = 0;
-    const ZyanUSize length = buf_exe_size;
+    const ZyanUSize length = buf_size;
     ZydisDecodedInstruction instruction;
     ZydisDecodedOperand operands[ZYDIS_MAX_OPERAND_COUNT_VISIBLE];
     while (ZYAN_TRUE)
     {
-        ZyanStatus status = ZydisDecoderDecodeFull(&decoder, buf_exe + offset, length - offset, &instruction, operands);
+        ZyanStatus status = ZydisDecoderDecodeFull(&decoder, buf + offset, length - offset, &instruction, operands);
         if (!ZYAN_SUCCESS(status))
         {
             printf("[>] Error %" PRIX32 " failed to decode %lld\n", status, offset);
@@ -76,7 +74,6 @@ int main(int argc, char** argv)
     }
 
 	printf("[>] Execution complete\n");
-    if (buf_exe) free(buf_exe);
-    if (buf_win) free(buf_win);
+    if (buf) free(buf);
     return 0;
 }
