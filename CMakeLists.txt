@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION "3.15")
 
 project(MSL_YYC)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -53,5 +53,12 @@ file(GLOB all_SRCS
     "source/*.c"
 )
 
+# Register Zydis dependency.
+# Disable build of tools and examples.
+option(ZYDIS_BUILD_TOOLS "" OFF)
+option(ZYDIS_BUILD_EXAMPLES "" OFF)
+add_subdirectory("deps/zydis")
+
 message(STATUS "Files are ${all_SRCS}")
 add_executable(msl_yyc ${all_SRCS})
+target_link_libraries(msl_yyc PRIVATE "Zydis")

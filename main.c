@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "include/Zydis.h"
+#include <Zydis/Zydis.h>
 #include "include/error.h"
 #include "include/pe_parser.h"
 #include <inttypes.h>

@@ -2,7 +2,7 @@
 
 ## Description
 
-An attempt to port YYTK in order to used in MSL.
+An attempt to port YYTK for MSL.
 
 ## Requirements
 
