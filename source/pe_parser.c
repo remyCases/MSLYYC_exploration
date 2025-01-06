@@ -70,6 +70,11 @@ int pe_load(char* file, char** buffer, size_t* buffer_size)
 
 int pe_parse(char *buffer)
 {
+    if (!buffer)
+    {
+        return MSL_NULL_BUFFER;
+    }
+
     PIMAGE_DOS_HEADER dos_header = (PIMAGE_DOS_HEADER)buffer;
     if (dos_header->e_magic != IMAGE_DOS_SIGNATURE)
     {

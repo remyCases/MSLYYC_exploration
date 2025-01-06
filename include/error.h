@@ -17,15 +17,16 @@
 #define TO_CASE_PRINT_(A, F)        case A: printf("[!] In function %s: "STR(A)" (code error %d)\n", F, A); break;
 
 // error enum
-#define MACRO_ERROR(X, ...)                      \
-    X(MSL_SUCCESS, __VA_ARGS__, SUCCESS)         \
-    X(MSL_ACCESS_DENIED, __VA_ARGS__)            \
-    X(MSL_INVALID_FILE_SIZE, __VA_ARGS__)        \
-    X(MSL_INSUFFICIENT_MEMORY, __VA_ARGS__)      \
-    X(MSL_UNREADABLE_FILE, __VA_ARGS__)          \
-    X(MSL_INVALID_DOS_SIGNATURE, __VA_ARGS__)    \
-    X(MSL_INVALID_NT_SIGNATURE, __VA_ARGS__)     \
-    X(MSL_UNKNWON_ERROR, __VA_ARGS__)            \
+#define MACRO_ERROR(X, ...)                     \
+    X(MSL_SUCCESS, __VA_ARGS__, SUCCESS)        \
+    X(MSL_ACCESS_DENIED, __VA_ARGS__)           \
+    X(MSL_INVALID_FILE_SIZE, __VA_ARGS__)       \
+    X(MSL_INSUFFICIENT_MEMORY, __VA_ARGS__)     \
+    X(MSL_UNREADABLE_FILE, __VA_ARGS__)         \
+    X(MSL_INVALID_DOS_SIGNATURE, __VA_ARGS__)   \
+    X(MSL_INVALID_NT_SIGNATURE, __VA_ARGS__)    \
+    X(MSL_NULL_BUFFER, __VA_ARGS__)             \
+    X(MSL_UNKNWON_ERROR, __VA_ARGS__)           \
 
 #define ERR(F, ...) error_print(STR(F), F(__VA_ARGS__))
 
