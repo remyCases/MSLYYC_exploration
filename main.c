@@ -15,14 +15,16 @@ int main(int argc, char** argv)
     char* path = NULL;
     size_t buf_size = 0;
     char* buf = NULL;
+    pe_file_t pe_file;
+
     int last_status = MSL_UNKNWON_ERROR;
     if (argc == 1) path = "data/StoneShard.exe";
     else path = argv[1];
  
     last_status = ERR(pe_load, path, &buf, &buf_size);
-    last_status = ERR(pe_parse, buf);
+    last_status = ERR(pe_parse, &pe_file, buf, buf_size);
 
-    last_status = ERR(decompile, buf, buf_size);
+    last_status = ERR(decompile, pe_file);
 
 	printf("[>] Execution complete\n");
     if (buf) free(buf);

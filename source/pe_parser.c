@@ -68,8 +68,12 @@ int pe_load(char* file, char** buffer, size_t* buffer_size)
     return err;
 }
 
-int pe_parse(char *buffer)
+int pe_parse(pe_file_t* pe_file, char *buffer, size_t buffer_size)
 {
+    pe_file->buf = NULL;
+    pe_file->buf_size = 0;
+    pe_file->file_type = OTHER;
+
     if (!buffer)
     {
         return MSL_NULL_BUFFER;
@@ -86,6 +90,10 @@ int pe_parse(char *buffer)
     {
         return MSL_INVALID_NT_SIGNATURE;
     }
+
+    pe_file->buf = buffer;
+    pe_file->buf_size = buffer_size;
+    pe_file->file_type = PE_FILE;
 
     return MSL_SUCCESS;
 }

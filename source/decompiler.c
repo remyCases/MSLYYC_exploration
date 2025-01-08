@@ -6,11 +6,25 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include "../include/decompiler.h"
+#include "../include/pe_parser.h"
 #include "../include/error.h"
 
-int decompile(char* buffer, size_t buffer_size)
+int decompile(pe_file_t pe_file)
 {
     int err = MSL_SUCCESS;
+    
+    if (pe_file.file_type != PE_FILE)
+    {
+        err = MSL_INVALID_FILE_TYPE;
+        goto clean_up;
+    }
+
+    if (!pe_file.buf)
+    {
+        err = MSL_NULL_BUFFER;
+        goto clean_up;
+    }
+
     // Initialize decoder context
     ZydisDecoder decoder;
     ZydisDecoderInit(&decoder, ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_STACK_WIDTH_64);
@@ -25,19 +39,19 @@ int decompile(char* buffer, size_t buffer_size)
     // visualize relative addressing
     ZyanU64 runtime_address = 0x0;
     ZyanUSize offset = 0;
-    const ZyanUSize length = buffer_size;
+    const ZyanUSize length = pe_file.buf_size;
     ZydisDecodedInstruction instruction;
     ZydisDecodedOperand operands[ZYDIS_MAX_OPERAND_COUNT_VISIBLE];
     while (ZYAN_TRUE)
     {
-        ZyanStatus status = ZydisDecoderDecodeFull(&decoder, buffer + offset, length - offset, &instruction, operands);
+        ZyanStatus status = ZydisDecoderDecodeFull(&decoder, pe_file.buf + offset, length - offset, &instruction, operands);
         if (!ZYAN_SUCCESS(status))
         {
             printf("[>] Error %" PRIX32 " failed to decode %lld\n", status, offset);
             printf("[>] Module %" PRIX32 "\n", ZYAN_STATUS_MODULE(status));
             printf("[>] Code %" PRIX32 "\n", ZYAN_STATUS_CODE(status));
             err = MSL_UNKNWON_ERROR;
-            break; 
+            goto clean_up;
         }
 
         // Print current instruction pointer.
@@ -60,5 +74,6 @@ int decompile(char* buffer, size_t buffer_size)
         runtime_address += instruction.length;
     }
 
+    clean_up:
     return err;
 }

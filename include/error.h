@@ -25,6 +25,7 @@
     X(MSL_UNREADABLE_FILE, __VA_ARGS__)         \
     X(MSL_INVALID_DOS_SIGNATURE, __VA_ARGS__)   \
     X(MSL_INVALID_NT_SIGNATURE, __VA_ARGS__)    \
+    X(MSL_INVALID_FILE_TYPE, __VA_ARGS__)       \
     X(MSL_NULL_BUFFER, __VA_ARGS__)             \
     X(MSL_UNKNWON_ERROR, __VA_ARGS__)           \
 
