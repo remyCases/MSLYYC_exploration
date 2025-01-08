@@ -6,7 +6,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 message(STATUS "Generator is set to ${CMAKE_GENERATOR}")
 
 set(CMAKE_C_STANDARD "99")
-set(CMAKE_CXX_STANDARD "11")
+set(CMAKE_CXX_STANDARD "23")
 
 if(CMAKE_SYSTEM MATCHES Windows)
 	message(STATUS "Target system is windows")

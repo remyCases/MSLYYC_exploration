@@ -1,6 +1,6 @@
 // Copyright (C) 2025 Rémy Cases
 // See LICENSE file for extended copyright information.
-// This file is part of adventOfCode project from https://github.com/remyCases/MSLYYC_exploration.
+// This file is part of MSLYYC_exploration project from https://github.com/remyCases/MSLYYC_exploration.
 
 #include <stdio.h>
 #include <string.h>
@@ -21,10 +21,10 @@ int main(int argc, char** argv)
     if (argc == 1) path = "data/StoneShard.exe";
     else path = argv[1];
  
-    last_status = LOG_ERR(pe_load, path, &buf, &buf_size);
-    last_status = LOG_ERR(pe_parse, &pe_file, buf, buf_size);
+    last_status = LOG_ON_ERR(pe_load, path, &buf, &buf_size);
+    last_status = LOG_ON_ERR(pe_parse, &pe_file, buf, buf_size);
 
-    last_status = LOG_ERR(decompile, pe_file);
+    last_status = LOG_ON_ERR(decompile, pe_file);
 
 	printf("[>] Execution complete\n");
     if (buf) free(buf);

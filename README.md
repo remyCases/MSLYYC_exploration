@@ -11,6 +11,10 @@ An attempt to port YYTK for MSL.
 - ninja
 - gcc
 
+## Init 
+
+`git submodule update --init --recursive`
+
 ## Make commands
 
 `make run VAR=path/to/exe`

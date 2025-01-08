@@ -1,6 +1,6 @@
 // Copyright (C) 2025 Rémy Cases
 // See LICENSE file for extended copyright information.
-// This file is part of adventOfCode project from https://github.com/remyCases/MSLYYC_exploration.
+// This file is part of MSLYYC_exploration project from https://github.com/remyCases/MSLYYC_exploration.
 
 #include <stdio.h>
 
@@ -29,7 +29,7 @@
     X(MSL_NULL_BUFFER, __VA_ARGS__)             \
     X(MSL_UNKNWON_ERROR, __VA_ARGS__)           \
 
-#define LOG_ERR(F, ...) error_print(STR(F), F(__VA_ARGS__))
+#define LOG_ON_ERR(F, ...) error_print(STR(F), F(__VA_ARGS__))
 
 typedef enum ERROR_MLS_ {
     MACRO_ERROR(TO_ENUM)

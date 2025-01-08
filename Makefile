@@ -1,6 +1,6 @@
 # Copyright (C) 2025 Rémy Cases
 # See LICENSE file for extended copyright information.
-# This file is part of adventOfCode project from https://github.com/remyCases/MSLYYC_exploration.
+# This file is part of MSLYYC_exploration project from https://github.com/remyCases/MSLYYC_exploration.
 
 # Convenient values
 empty:=
@@ -20,8 +20,8 @@ endif
 # Default values
 BUILD_TYPE ?= Release
 
-# C99 specific default values
-COMPILER ?= gcc
+C_COMPILER ?= gcc
+CXX_COMPILER ?= g++
 VERBOSE ?= OFF
 CMAKE_GENERATOR ?= "Ninja"
 
@@ -47,7 +47,8 @@ build: prerequisite main
 # Base build command
 CMAKE_BASE_CMD = cmake -Bbuild -G $(CMAKE_GENERATOR) \
     -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) \
-    -DCMAKE_CXX_COMPILER=$(COMPILER) \
+    -DCMAKE_C_COMPILER=$(C_COMPILER) \
+    -DCMAKE_CXX_COMPILER=$(CXX_COMPILER) \
     -DCMAKE_VERBOSE_MAKEFILE=$(VERBOSE)
 
 # OS-specific build commands
@@ -91,3 +92,7 @@ run: clean build_release
 ### CLEAN ###
 clean:
 	-$(RM) $(RMBINS)
+
+### CLEAR ###
+clear:
+	-$(RM) ./build
