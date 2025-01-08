@@ -13,11 +13,13 @@ char* error_str(ERROR_MLS err)
     }
 }
 
-void error_print(char* func, ERROR_MLS err)
+int error_print(char* func, ERROR_MLS err)
 {
     switch(err) 
     {
         MACRO_ERROR(TO_CASE_PRINT, func)
         default:;
     }
+
+    return err;
 }

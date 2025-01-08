@@ -35,4 +35,4 @@ typedef enum ERROR_MLS_ {
 } ERROR_MLS;
 
 char* error_str(ERROR_MLS err);
-void error_print(char* func, ERROR_MLS err);
+int error_print(char* func, ERROR_MLS err);
