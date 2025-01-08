@@ -29,11 +29,11 @@
     X(MSL_NULL_BUFFER, __VA_ARGS__)             \
     X(MSL_UNKNWON_ERROR, __VA_ARGS__)           \
 
-#define ERR(F, ...) error_print(STR(F), F(__VA_ARGS__))
+#define LOG_ERR(F, ...) error_print(STR(F), F(__VA_ARGS__))
 
 typedef enum ERROR_MLS_ {
     MACRO_ERROR(TO_ENUM)
 } ERROR_MLS;
 
 char* error_str(ERROR_MLS err);
-int error_print(char* func, ERROR_MLS err);
+int error_print(char* function_name, ERROR_MLS err);

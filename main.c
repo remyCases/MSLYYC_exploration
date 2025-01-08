@@ -21,10 +21,10 @@ int main(int argc, char** argv)
     if (argc == 1) path = "data/StoneShard.exe";
     else path = argv[1];
  
-    last_status = ERR(pe_load, path, &buf, &buf_size);
-    last_status = ERR(pe_parse, &pe_file, buf, buf_size);
+    last_status = LOG_ERR(pe_load, path, &buf, &buf_size);
+    last_status = LOG_ERR(pe_parse, &pe_file, buf, buf_size);
 
-    last_status = ERR(decompile, pe_file);
+    last_status = LOG_ERR(decompile, pe_file);
 
 	printf("[>] Execution complete\n");
     if (buf) free(buf);
