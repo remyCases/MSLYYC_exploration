@@ -5,10 +5,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <inttypes.h>
+#include <Zydis/Zydis.h>
 #include "include/error.h"
 #include "include/pe_parser.h"
-#include "include/decompiler.h"
-#include <inttypes.h>
 
 int main(int argc, char** argv) 
 {
@@ -23,8 +23,6 @@ int main(int argc, char** argv)
  
     last_status = LOG_ON_ERR(pe_load, path, &buf, &buf_size);
     last_status = LOG_ON_ERR(pe_parse, &pe_file, buf, buf_size);
-
-    last_status = LOG_ON_ERR(decompile, pe_file);
 
 	printf("[>] Execution complete\n");
     if (buf) free(buf);

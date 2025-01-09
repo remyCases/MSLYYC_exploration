@@ -4,7 +4,7 @@
 
 #include "../include/error.h"
 
-char* error_str(ERROR_MLS err) 
+char* error_str(int err) 
 {
     switch(err) 
     {
@@ -13,7 +13,7 @@ char* error_str(ERROR_MLS err)
     }
 }
 
-int error_print(char* function_name, ERROR_MLS err)
+int error_print(char* function_name, int err)
 {
     switch(err) 
     {

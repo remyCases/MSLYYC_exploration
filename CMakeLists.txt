@@ -58,7 +58,9 @@ file(GLOB all_SRCS
 option(ZYDIS_BUILD_TOOLS "" OFF)
 option(ZYDIS_BUILD_EXAMPLES "" OFF)
 add_subdirectory("deps/zydis")
+add_subdirectory("deps/safetyhook")
 
 message(STATUS "Files are ${all_SRCS}")
 add_executable(msl_yyc ${all_SRCS})
 target_link_libraries(msl_yyc PRIVATE "Zydis")
+target_link_libraries(msl_yyc PRIVATE safetyhook)
