@@ -30,6 +30,12 @@ int main(int argc, char** argv)
     last_status = LOG_ON_ERR(create_callback, &module, EVENT_OBJECT_CALL, NULL, 0);
     last_status = LOG_ON_ERR(create_callback, &module, EVENT_OBJECT_CALL, (void*)1, 1);
     last_status = LOG_ON_ERR(create_callback, &module, EVENT_OBJECT_CALL, (void*)2, 2);
+    print_callback();
+    last_status = LOG_ON_ERR(remove_callback, &module, (void*)2);
+    print_callback();
+    last_status = LOG_ON_ERR(remove_callback, &module, (void*)0);
+    print_callback();
+    last_status = LOG_ON_ERR(remove_callback, &module, (void*)1);
 
 	printf("[>] Execution complete\n");
     if (buf) free(buf);

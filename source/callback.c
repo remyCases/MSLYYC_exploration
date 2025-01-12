@@ -82,11 +82,19 @@ static int find_descriptor(module_callback_descriptor_t* descriptor, module_call
 
 static int remove_callback_from_list(module_t* module, void* routine)
 {
+	if (!registered_callbacks.size)
+	{
+		return MSL_NULL_BUFFER;
+	}
+
 	for(size_t i = 0; i < registered_callbacks.size; i++)
 	{
 		if (registered_callbacks.arr[i].routine == routine && registered_callbacks.arr[i].owner_module == module)
 		{
-			// TODO
+			registered_callbacks.arr[i] = registered_callbacks.arr[registered_callbacks.size - 1];
+			registered_callbacks.size--;
+
+			return sort_module_callbacks();
 		}
 	}
 
@@ -126,7 +134,7 @@ static int add_to_callback_list(module_callback_descriptor_t* descriptor)
 int create_callback(module_t* module, EVENT_TRIGGERS trigger, void* routine, int32_t priority)
 {
     int status = MSL_SUCCESS;
-    if (!callback_exists(module, routine)) 
+    if (callback_exists(module, routine) == MSL_SUCCESS) 
     {
         status = MSL_OBJECT_ALREADY_EXISTS;
         return status;
@@ -144,9 +152,18 @@ int create_callback(module_t* module, EVENT_TRIGGERS trigger, void* routine, int
 
 int remove_callback(module_t* module, void* routine)
 {
-	if (!callback_exists(module, routine))
-		return MSL_OBJECT_NOT_IN_LIST;
+	int status = MSL_SUCCESS;
+	status = callback_exists(module, routine);
+	if(status) return status;
 
-	remove_callback_from_list(module, routine);
-	return MSL_SUCCESS;
+	return remove_callback_from_list(module, routine);
+}
+
+int print_callback()
+{
+	printf("Size: %p\n", registered_callbacks.size);
+	for(size_t i = 0; i < registered_callbacks.size; i++)
+	{
+		printf("Routine: %p\n", registered_callbacks.arr[i].routine);
+	}
 }

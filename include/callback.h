@@ -33,3 +33,4 @@ int init_module_callbacks();
 int free_module_callbacks();
 int create_callback(module_t* module, EVENT_TRIGGERS trigger, void* routine, int32_t priority);
 int remove_callback(module_t* module, void* routine);
+int print_callback();
