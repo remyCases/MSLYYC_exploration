@@ -4,22 +4,22 @@
 
 #include "../include/error.h"
 
-char* error_str(int err) 
+char* error_str(int status) 
 {
-    switch(err) 
+    switch(status) 
     {
         MACRO_ERROR(TO_CASE_STR)
         default: return "";
     }
 }
 
-int error_print(char* function_name, int err)
+int error_print(char* function_name, int status)
 {
-    switch(err) 
+    switch(status) 
     {
         MACRO_ERROR(TO_CASE_PRINT, function_name)
         default:;
     }
 
-    return err;
+    return status;
 }

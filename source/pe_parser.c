@@ -13,7 +13,7 @@ int pe_load(char* file, char** buffer, size_t* buffer_size)
 {
     *buffer_size = -1;
     FILE *fp = fopen(file, "rb");
-    int err = MSL_SUCCESS;
+    int status = MSL_SUCCESS;
 
     if (fp != NULL)
     {
@@ -24,7 +24,7 @@ int pe_load(char* file, char** buffer, size_t* buffer_size)
             *buffer_size = ftell(fp);
             if (*buffer_size == (uint64_t)(-1)) 
             { 
-                err = MSL_INVALID_FILE_SIZE;
+                status = MSL_INVALID_FILE_SIZE;
                 goto clean_up;
             }
 
@@ -32,14 +32,14 @@ int pe_load(char* file, char** buffer, size_t* buffer_size)
             *buffer = (char*)malloc(sizeof(char) * (*buffer_size + 1));
             if (*buffer == NULL)
             {
-                err = MSL_INSUFFICIENT_MEMORY;
+                status = MSL_INSUFFICIENT_MEMORY;
                 goto clean_up;
             }
 
             /* Go back to the start of the file. */
             if (fseek(fp, 0L, SEEK_SET) != 0)
             {
-                err = MSL_UNKNWON_ERROR;
+                status = MSL_UNKNWON_ERROR;
                 goto clean_up;
             }
 
@@ -47,7 +47,7 @@ int pe_load(char* file, char** buffer, size_t* buffer_size)
             size_t new_len = fread(*buffer, sizeof(char), *buffer_size, fp);
             if (ferror(fp) != 0) 
             {
-                err = MSL_UNREADABLE_FILE;
+                status = MSL_UNREADABLE_FILE;
                 goto clean_up;
             }
             else 
@@ -58,14 +58,14 @@ int pe_load(char* file, char** buffer, size_t* buffer_size)
     }
     else
     {
-        err = MSL_ACCESS_DENIED;
+        status = MSL_ACCESS_DENIED;
         goto clean_up;
     }
     printf("[>] Loaded file %s with size %016" PRIX64 "\n", file, *buffer_size);
 
     clean_up:
     fclose(fp);
-    return err;
+    return status;
 }
 
 int pe_parse(pe_file_t* pe_file, char *buffer, size_t buffer_size)
