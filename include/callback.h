@@ -8,6 +8,14 @@
 #include <stdint.h>
 #include "module.h"
 
+#define DISPATCH_CALLBACKS(T)                                                                                               \
+int dispatch_callbacks(msl_interface_impl_t* msl_interface_impl, EVENT_TRIGGERS trigger, FUNCTION_WRAPPER(T)* function) {   \
+	for(size_t i = 0; i < msl_interface_impl->registered_callbacks.size; i++) {                                             \
+		if (msl_interface_impl->registered_callbacks.arr[i].trigger == trigger)                                             \
+			(void(*FUNCTION_WRAPPER(T))())(msl_interface_impl->registered_callbacks.arr[i].routine)(function);              \
+	}                                                                                                                       \
+}
+
 typedef enum EVENT_TRIGGERS
 {
     EVENT_OBJECT_CALL = 1,	// The event represents a Code_Execute() call.

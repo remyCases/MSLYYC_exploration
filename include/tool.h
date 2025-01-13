@@ -17,7 +17,8 @@ typedef struct rvariable_routine_s rvariable_routine_t;
 
 typedef bool(*FNGetVariable)(instance_t* instance, int index, rvalue_t* value);
 typedef bool(*FNSetVariable)(instance_t* instance, int index, rvalue_t* Value);
-
+typedef script_t*(*FNScriptData)(int index);
+typedef room_t*(*FNRoomData)(int index);
 struct rfunction_string_full_s
 {
     char name[64];

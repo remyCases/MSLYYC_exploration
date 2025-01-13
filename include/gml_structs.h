@@ -57,6 +57,8 @@ typedef void(*FNGetOwnProperty)(yyobject_base_t* object, rvalue_t* result, const
 typedef void(*FNDeleteProperty)(yyobject_base_t* object, rvalue_t* result, const char* name, bool throw_on_error);
 typedef EJSRetValBool(*FNDefineOwnProperty)(yyobject_base_t* object, const char* name, rvalue_t* result, bool throw_on_error);
 typedef void(*TRoutine)(rvalue_t* result, instance_t* self, instance_t* other, int argument_count, rvalue_t* arguments);
+typedef void(*PFN_YYObjectBaseAdd)(yyobject_base_t* object, const char* name, const rvalue_t* value, int flags);
+typedef int(*PFN_FindAllocSlot)(yyobject_base_t* object, const char* name);
 
 HASH_PTR(int32_t, rvalue_t)
 HASH_PTR(int, object_gm_t)
