@@ -20,4 +20,5 @@ typedef struct pe_file_s {
 int pe_load(char* file, char** buffer, size_t* buffer_size);
 int pe_parse(pe_file_t* pe_file, char *buffer, size_t buffer_size);
 
+int ppi_get_module_section_bounds(void* image, const char* section_name, uint64_t* section_offset, size_t* section_size);
 #endif  /* !PE_PARSER_H_ */
