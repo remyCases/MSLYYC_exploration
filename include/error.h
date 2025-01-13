@@ -2,19 +2,11 @@
 // See LICENSE file for extended copyright information.
 // This file is part of MSLYYC_exploration project from https://github.com/remyCases/MSLYYC_exploration.
 
+#ifndef ERROR_H_
+#define ERROR_H_
+
 #include <stdio.h>
-
-// usefull macros
-#define STR(A)                          #A
-#define CAT(A, B)                       A ## B
-#define S_CAT(A, B)                     CAT(A, B)
-#define CAT_UND(A, B)                   S_CAT(S_CAT(A, _), B)
-
-#define TO_ENUM(A, ...)                 A,
-#define TO_CASE_STR(A, ...)             case A: return STR(A);
-#define TO_CASE_PRINT(A, F, L, ...)     CAT_UND(TO_CASE_PRINT, __VA_ARGS__)(A, F, L)
-#define TO_CASE_PRINT_SUCCESS(A, F, L)  case A: break;
-#define TO_CASE_PRINT_(A, F, L)         case A: printf("[!] Line %d, in function %s: "STR(A)" (code error %d)\n", L, F, A); break;
+#include "utils_macro.h"
 
 // error enum
 #define MACRO_ERROR(X, ...)                     \
@@ -40,3 +32,5 @@ typedef enum ERROR_MLS_ {
 
 char* error_str(int status);
 int error_print(char* function_name, int nline, int status);
+
+#endif  /* !ERROR_H_ */

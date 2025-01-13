@@ -2,6 +2,9 @@
 // See LICENSE file for extended copyright information.
 // This file is part of MSLYYC_exploration project from https://github.com/remyCases/MSLYYC_exploration.
 
+#ifndef CALLBACK_H_
+#define CALLBACK_H_
+
 #include <stdint.h>
 #include "module.h"
 
@@ -34,3 +37,5 @@ int free_module_callbacks();
 int create_callback(module_t* module, EVENT_TRIGGERS trigger, void* routine, int32_t priority);
 int remove_callback(module_t* module, void* routine);
 int print_callback();
+
+#endif  /* !CALLBACK_H_ */

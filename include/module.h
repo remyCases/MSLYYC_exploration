@@ -2,6 +2,9 @@
 // See LICENSE file for extended copyright information.
 // This file is part of MSLYYC_exploration project from https://github.com/remyCases/MSLYYC_exploration.
 
+#ifndef MODULE_H_
+#define MODULE_H_
+
 #include <stdint.h>
 #include <stdbool.h>
 #include <Windows.h>
@@ -56,3 +59,4 @@ typedef struct module_s
     } ImageEntrypoint;
 } module_t;
 
+#endif  /* !MODULE_H_ */

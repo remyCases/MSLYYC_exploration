@@ -2,6 +2,9 @@
 // See LICENSE file for extended copyright information.
 // This file is part of MSLYYC_exploration project from https://github.com/remyCases/MSLYYC_exploration.
 
+#ifndef PE_PARSER_H_
+#define PE_PARSER_H_
+
 #include <stddef.h>
 
 typedef enum FILE_TYPE_ {
@@ -16,3 +19,5 @@ typedef struct pe_file_s {
 
 int pe_load(char* file, char** buffer, size_t* buffer_size);
 int pe_parse(pe_file_t* pe_file, char *buffer, size_t buffer_size);
+
+#endif  /* !PE_PARSER_H_ */
