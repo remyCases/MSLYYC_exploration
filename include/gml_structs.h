@@ -440,7 +440,7 @@ struct room_s
     bool show_color;
 
     // Last confirmed use in 2023.8, might be later even
-    with_backgrounds_t with_backgrounds
+    with_backgrounds_t with_backgrounds;
 };
 #ifdef _WIN64
 	COMPILE_TIME_ASSERT(sizeof(room_t) == 0x218);
