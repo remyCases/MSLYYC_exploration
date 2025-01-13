@@ -20,6 +20,22 @@ typedef struct physics_object_s physics_object_t;
 typedef struct skeleton_instance_s skeleton_instance_t;
 typedef struct yygml_functions_s yygml_functions_t;
 typedef struct code_s code_t;
+typedef struct script_s script_t;
+typedef struct back_gm_s back_gm_t;
+typedef struct view_gm_s view_gm_t;
+typedef	struct physics_world_s physics_world_t;
+typedef	struct yyroom_tiles_s yyroom_tiles_t;
+typedef	struct rtile_s rtile_t;
+typedef	struct layer_effect_info_s layer_effect_info_t;
+typedef	struct yyroom_instances_s yyroom_instances_t;
+typedef struct yyroom_s yyroom_t;
+typedef struct layer_element_base_s layer_element_base_t;
+typedef struct layer_instance_element_s layer_instance_element_t;
+typedef struct layer_sprite_element_s layer_sprite_element_t;
+typedef struct layer_s layer_t;
+typedef struct room_internal_s room_internal_t;
+typedef struct with_backgrounds_s with_backgrounds_t;
+typedef struct room_s room_t;
 typedef struct physics_data_gm_s physics_data_gm_t;
 typedef struct event_s event_t;
 typedef struct instance_s instance_t;
@@ -45,10 +61,27 @@ typedef void(*TRoutine)(rvalue_t* result, instance_t* self, instance_t* other, i
 HASH_PTR(int32_t, rvalue_t)
 HASH_PTR(int, object_gm_t)
 HASH_PTR(int, event_t)
+HASH_PTR(int32_t, layer_t)
+HASH_PTR(int32_t, layer_element_base_t)
+HASH_PTR(int32_t, layer_instance_element_t)
 
 LINKEDLIST(instance_t)
+LINKEDLIST(layer_element_base_t)
+LINKEDLIST(layer_t)
 #ifdef _WIN64
 	COMPILE_TIME_ASSERT(sizeof(LINKEDLIST_TYPE(instance_t)) == 0x18);
+#endif // _WIN64
+
+OLINKEDLIST(instance_t)
+#ifdef _WIN64
+	COMPILE_TIME_ASSERT(sizeof(OLINKEDLIST_TYPE(instance_t)) == 0x18);
+	COMPILE_TIME_ASSERT(sizeof(OLINKEDLIST_TYPE(instance_t)) == sizeof(LINKEDLIST_TYPE(instance_t)));
+#endif // _WIN64
+
+ARRAY_STRUCTURE(int)
+ARRAY_STRUCTURE(rtile_t)
+#ifdef _WIN64
+	COMPILE_TIME_ASSERT(sizeof(ARRAY_STRUCTURE_TYPE(int)) == 0x10);
 #endif // _WIN64
 
 enum EJSRetValBool
@@ -61,7 +94,7 @@ enum EJSRetValBool
 enum YYOBJECT_KIND
 {
     OBJECT_KIND_YYOBJECTBASE = 0,
-    OBJECT_KIND_CINSTANCE,
+    OBJECT_KIND_instance_t,
     OBJECT_KIND_ACCESSOR,
     OBJECT_KIND_SCRIPTREF,
     OBJECT_KIND_PROPERTY,
@@ -173,6 +206,244 @@ struct code_s
     yyobject_base_t* prototype;
 };
 
+struct script_s
+{
+    int (**_vptr_script)(void);
+    code_t* code;
+    yygml_functions_t* functions;
+    instance_t* static_object;
+
+    union
+    {
+        const char* script;
+        int compiled_index;
+    };
+
+    const char* name;
+    int offset;
+};
+
+struct yyroom_s
+{
+    // The name of the room
+    uint32_t name_offset;
+    // The caption of the room, legacy variable, used pre-GMS
+    uint32_t caption;
+    // The width of the room
+    int32_t width;
+    // The height of the room
+    int32_t height;
+    // Speed of the room
+    int32_t speed;
+    // Whether the room is persistent (UMT marks it as a bool, but it seems to be int32_t)
+    int32_t persistent;
+    // The background color
+    int32_t color;
+    // Whether to show the background color
+    int32_t show_color;
+    // Creation code of the room
+    uint32_t creation_code;
+    int32_t enable_views;
+    uint32_t p_backgrounds;
+    uint32_t p_views;
+    uint32_t p_instances;
+    uint32_t p_tiles;
+    int32_t physics_world;
+    int32_t physics_world_top;
+    int32_t physics_world_left;
+    int32_t physics_world_right;
+    int32_t physics_world_bottom;
+    float physics_gravity_x;
+    float physics_gravity_y;
+    float physics_pixel_to_meters;
+};
+#ifdef _WIN64
+	COMPILE_TIME_ASSERT(sizeof(yyroom_t) == 0x58);
+#endif // _WIN64
+
+struct layer_element_base_s
+	{
+		int32_t type;
+		int32_t id;
+		bool runtime_data_initialized;
+		const char* name;
+		layer_t* layer;
+		union
+		{
+			layer_instance_element_t* instance_flink;
+			layer_sprite_element_t* sprite_flink;
+			layer_element_base_t* flink;
+		};
+		union
+		{
+			layer_instance_element_t* instance_blink;
+			layer_sprite_element_t* sprite_blink;
+			layer_element_base_t* blink;
+		};
+	};
+#ifdef _WIN64
+	COMPILE_TIME_ASSERT(sizeof(layer_element_base_t) == 0x30);
+#endif // _WIN64
+
+struct layer_instance_element_s
+	{
+        int32_t type;
+		int32_t id;
+		bool runtime_data_initialized;
+		const char* name;
+		layer_t* layer;
+		union
+		{
+			layer_instance_element_t* instance_flink;
+			layer_sprite_element_t* sprite_flink;
+			layer_element_base_t* flink;
+		};
+		union
+		{
+			layer_instance_element_t* instance_blink;
+			layer_sprite_element_t* sprite_blink;
+			layer_element_base_t* blink;
+		};
+		int32_t instance_id;
+		instance_t* instance;
+	};
+#ifdef _WIN64
+	COMPILE_TIME_ASSERT(sizeof(layer_instance_element_t) == 0x40);
+#endif // _WIN64
+
+struct layer_sprite_element_s
+	{
+        int32_t type;
+		int32_t id;
+		bool runtime_data_initialized;
+		const char* name;
+		layer_t* layer;
+		union
+		{
+			layer_instance_element_t* instance_flink;
+			layer_sprite_element_t* sprite_flink;
+			layer_element_base_t* flink;
+		};
+		union
+		{
+			layer_instance_element_t* instance_blink;
+			layer_sprite_element_t* sprite_blink;
+			layer_element_base_t* blink;
+		};
+		int32_t sprite_index;
+		float sequence_position;
+		float sequence_direction;
+		float image_index;
+		float image_speed;
+		int32_t speed_type;
+		float image_scale_x;
+		float image_scale_y;
+		float image_angle;
+		uint32_t image_blend;
+		float image_alpha;
+		float x;
+		float y;
+	};
+#ifdef _WIN64
+	COMPILE_TIME_ASSERT(sizeof(layer_sprite_element_t) == 0x68);
+#endif // _WIN64
+struct layer_s
+{
+    int32_t id;
+    int32_t depth;
+    float x_offset;
+    float y_offset;
+    float horizontal_speed;
+    float vertical_speed;
+    bool visible;
+    bool deleting;
+    bool dynamic;
+    const char* name;
+    rvalue_t begin_script;
+    rvalue_t end_script;
+    bool effect_enabled;
+    bool effect_pending_enabled;
+    rvalue_t effect;
+    layer_effect_info_t* initial_effect_info;
+    int32_t shader_id;
+    LINKEDLIST_TYPE(layer_element_base_t) elements;
+    layer_t* flink;
+    layer_t* blink;
+    void* gc_proxy;
+};
+#ifdef _WIN64
+	COMPILE_TIME_ASSERT(sizeof(layer_t) == 0xA0);
+#endif // _WIN64
+
+struct room_internal_s
+{
+    // CBackGM* m_Backgrounds[8];
+    bool enable_views;
+    bool clear_screen;
+    bool clearDisplayBuffer;
+    view_gm_t* views[8];
+    const char* legacy_code;
+    code_t* code_object;
+    bool has_physics_world;
+    int32_t physics_gravity_x;
+    int32_t physics_gravity_y;
+    float physics_pixel_to_meters;
+    OLINKEDLIST_TYPE(instance_t) active_instances;
+    LINKEDLIST_TYPE(instance_t) inactive_instances;
+    instance_t* marked_first;
+    instance_t* marked_last;
+    int32_t* creation_order_list;
+    int32_t creation_order_list_size;
+    yyroom_t* wad_room;
+    void* wad_base_address;
+    physics_world_t* physics_world;
+    int32_t tile_count;
+    ARRAY_STRUCTURE_TYPE(rtile_t) tiles;
+    yyroom_tiles_t* wad_tiles;
+    yyroom_instances_t* wad_instances;
+    const char* name;
+    bool is_duplicate;
+    LINKEDLIST_TYPE(layer_t) layers;
+    HASHMAP_TYPE_PTR(int32_t, layer_t) layer_lookup;
+    HASHMAP_TYPE_PTR(int32_t, layer_element_base_t) layer_element_lookup;
+    layer_element_base_t* last_element_looked_up;
+    HASHMAP_TYPE_PTR(int32_t, layer_instance_element_t) instance_element_lookup;
+    int32_t* sequence_instance_ids;
+    int32_t sequence_instance_id_count;
+    int32_t sequence_instance_id_max;
+    int32_t* effect_layer_ids;
+    int32_t effect_layer_id_count;
+    int32_t effect_layer_id_max;
+};
+#ifdef _WIN64
+	COMPILE_TIME_ASSERT(sizeof(room_internal_t) == 0x1A8);
+#endif // _WIN64
+
+struct with_backgrounds_s
+{
+    back_gm_t* backgrounds[8];
+    room_internal_t internals;
+};
+
+struct room_s
+{
+    int32_t last_tile;
+    room_t* instance_handle;
+    const char* caption;
+    int32_t speed;
+    int32_t width;
+    int32_t height;
+    bool persistent;
+    uint32_t color;
+    bool show_color;
+
+    // Last confirmed use in 2023.8, might be later even
+    with_backgrounds_t with_backgrounds
+};
+#ifdef _WIN64
+	COMPILE_TIME_ASSERT(sizeof(room_t) == 0x218);
+#endif // _WIN64
+
 struct physics_data_gm_s
 {
     float* physics_vertices;
@@ -204,10 +475,11 @@ struct event_s
 
 struct instance_base_s
 {
+	void(*destroy_instance_base)();
     rvalue_t* yyvars;
 };
 #ifdef _WIN64
-	COMPILE_TIME_ASSERT(sizeof(instance_base_t) == 0x08); // 8 bits less since no virtual function (8 bits on 64bits)
+	COMPILE_TIME_ASSERT(sizeof(instance_base_t) == 0x10);
 #endif // _WIN64
 
 struct yyobject_base_s
@@ -236,7 +508,7 @@ struct yyobject_base_s
     int32_t current_slot;
 };
 #ifdef _WIN64
-	COMPILE_TIME_ASSERT(sizeof(yyobject_base_t) == 0x80); // 8 bits less since no virtual function (8 bits on 64bits)
+	COMPILE_TIME_ASSERT(sizeof(yyobject_base_t) == 0x88);
 #endif // _WIN64
 
 struct object_gm_s
@@ -350,7 +622,7 @@ struct instance_s
     // Structs misalign between 2022.1 and 2023.8
     // Easy way to check which to use is to check id and compare
     // it to the result of GetBuiltin("id") on the same instance.
-    // Use GetMembers() to get a CInstanceVariables reference.
+    // Use GetMembers() to get a instance_tVariables reference.
     union
     {
         members_only_t members_only;
