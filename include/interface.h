@@ -5,6 +5,7 @@
 #ifndef INTERFACE_H_
 #define INTERFACE_H_
 
+#include "Windows.h"
 #include "gml_structs.h"
 #include "tool.h"
 #include "utils.h"
@@ -13,11 +14,13 @@
 #include "runner_interface.h"
 
 HASH_STR(TRoutine)
+HASH_STR(size_t)
 
 typedef enum CM_COLOR CM_COLOR;
 
 typedef struct msl_interface_base_s msl_interface_base_t;
 typedef struct msl_interface_s msl_interface_t;
+typedef struct msl_interface_impl_s msl_interface_impl_t;
 
 enum CM_COLOR
 {
@@ -90,5 +93,107 @@ struct msl_interface_s
     int(*get_variable_slot)(const rvalue_t* object, const char* variable_name, int32_t* hash);
 };
 
+struct msl_interface_impl_s
+{
+    msl_interface_t msl_interface;
+
+    // Dictates whether the first stage of initializing completed already.
+    bool first_init_complete;
+
+    // Dictates whether the second stage of initializing completed already.
+    bool second_init_complete;
+
+    // The runner interface stolen by disassembling Extension_PrePrepare(),
+    // alternatively found by reconstructing the stack (in older games).
+    yyrunner_interface_t runner_interface;
+
+    bool is_yyc_runner;
+
+    // Set to true if the midfunction hook is used to get the runner interface.
+    // If it is, the runner interface is unavailable during stage 1 init.
+    bool is_using_mid_function_hook;
+
+    // A handle to an event which is signaled by the mid-function hook.
+    // Once signaled, the runner interface has been populated with values.
+    HANDLE runner_interface_populated_event;
+
+    // The instruction pointer of the Extension_PrePrepare breakpoint.
+    void* exception_rip;
+
+    // Original bytes of Extension_PrePrepare's JS instruction.
+    // Only used if VEH is used.
+    uint8_t* extension_patch_bytes;
+
+    // The base address of the JS instruction.
+    // Only used if VEH is used.
+    void* extension_patch_base;
+
+    // A pointer to the functions array in memory
+    rfunction_t** functions_array;
+
+    // A pointer to the Script_Data() engine function.
+    FNScriptData get_script_data;
+
+    // A pointer to the Room_Data() engine function.
+    FNRoomData get_room_data;
+
+    // A pointer to the pointer to the running room
+    room_t** run_room;
+
+    // Cache used for lookups of builtin functions (room_goto, etc.)
+    // key = name, value = function pointer
+    HASHMAP_TYPE_STR(TRoutine) builtin_function_cache;
+
+    // Cache used for lookups of builtin variables (xprevious, etc.)
+    // key = name, value = index in the m_BuiltinArray
+    HASHMAP_TYPE_STR(size_t) builtin_variable_cache;
+
+    // D3D11 stuff
+    IDXGISwapChain* engine_swapchain;
+    HWND window_handle;
+
+    // The size of one entry in the RFunction array
+    // GameMaker LTS still uses a 64-byte char array in the RFunction struct directly
+    // New runners (2023.8) use a const char* in the array
+    size_t function_entry_size;
+
+    // Array of up to 500 builtins
+    rvariable_routine_t* builtin_array;
+    int* builtin_count;
+
+    // Needed for RValue array access
+    // RValue* actual_array = (RValue**)(RValue.m_Pointer)[this_value / sizeof(RValue*)];
+    int64_t rvalue_array_offset;
+
+    // Used to add or set a named value in a YYObjectBase structure.
+    PFN_YYObjectBaseAdd add_to_yyobject_base;
+
+    // Used to turn a name into a hash to use in lookups in the internal hashmap.
+    // While accessible through variable_struct_get_hash in newer runners,
+    // some don't have the function.
+    // In case the name isn't in the hashmap, the function allocates a new slot for it,
+    // effectively creating the variable inside the object.
+    PFN_FindAllocSlot find_alloc_slot;
+
+    // Stores plugin callbacks
+    module_callback_descriptor_t* registered_callbacks;
+
+    // === Internal functions ===
+    int(*extract_function_entry)(size_t index, char** function_name, TRoutine* function_routine, int32_t* argument_count);
+    int(*create_callback_descriptor)(module_t* module, EVENT_TRIGGERS trigger, void* routine, int32_t priority, module_callback_descriptor_t* descriptor);
+    int(*add_to_callback_list)(module_callback_descriptor_t* descriptor);
+    int(*find_descriptor)(module_callback_descriptor_t* descriptor, module_callback_descriptor_t* element);
+    int(*remove_callback_from_list)(module_t* module, void* routine);
+    int(*callback_exists)(module_t* module, void* routine);;
+
+    // TODO: DISPATCH_CALLBACKS
+
+    int (*fetch_D3D11_info)(ID3D11Device** device_object, IDXGISwapChain** swapchain);
+    int (*determine_function_entry_size)(size_t* size);
+};
+
+extern msl_interface_impl_t global_module_interface;
+
 FUNC_HASH_STR(TRoutine)
+
 #endif  /* !INTERFACE_H_ */
