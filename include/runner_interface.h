@@ -64,12 +64,12 @@ struct ibuffer_vtable_s
     void (*Fill)(int _offset, int _size, EBUFFER_TYPE _type, rvalue_t* _p_in, int _stride, bool fill_gaps);
     void (*GetSurface)(int _surface);
     void (*SetSurface)(int _surface, int _offset);
-    uint8_t* (*Compress)(int _offset, int _size, uint32_t& resultSize);
-    uint8_t* (*Decompress)(uint32_t& resultSize);
+    uint8_t* (*Compress)(int _offset, int _size, uint32_t* resultSize);
+    uint8_t* (*Decompress)(uint32_t* resultSize);
 };
 
 struct ibuffer_s {
-    const ibuffer_vtable_s* vt;  // Same size as C++ vtable pointer
+    const ibuffer_vtable_t* vt;  // Same size as C++ vtable pointer
 };
 #ifdef _WIN64
 	COMPILE_TIME_ASSERT(sizeof(ibuffer_t) == 0x8);
@@ -1299,7 +1299,7 @@ typedef struct yyrunner_interface_s
         * @note This function can be used to retrieve any type of value set by the extension user,
         *       and developers should ensure the returned rvalue_t is interpreted and handled correctly.
         */
-    void (*extOptGetrvalue_t)(rvalue_t& result, const char* _ext, const char* _opt);
+    void (*extOptGetrvalue_t)(rvalue_t* result, const char* _ext, const char* _opt);
 
     /**
      * @brief Retrieves the value of a specified extension option as a string.
