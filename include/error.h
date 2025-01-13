@@ -23,6 +23,7 @@
     X(MSL_OBJECT_ALREADY_EXISTS, __VA_ARGS__)   \
     X(MSL_OBJECT_NOT_FOUND, __VA_ARGS__)        \
     X(MSL_OBJECT_NOT_IN_LIST, __VA_ARGS__)      \
+    X(MSL_MODULE_INTERNAL_ERROR, __VA_ARGS__)   \
     X(MSL_UNKNWON_ERROR, __VA_ARGS__)           \
 
 #define LOG_ON_ERR(F, ...) error_print(STR(F), __FILE__, __LINE__, F(__VA_ARGS__))
