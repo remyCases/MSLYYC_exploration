@@ -65,7 +65,7 @@ struct msl_interface_s
     int(*get_named_routine_pointer)(const char* function_name, void** function_pointer);
     int(*get_global_instance)(instance_t** instance);
     int(*call_builtin)(const char* function_name, rvalue_t* args, size_t arg_size, rvalue_t* out);
-    int(*call_builtin_ex)(rvalue_t* result, const char* function_name, instance_t* self, instance_t* other, rvalue_t* args, size_t arg_size);
+    int(*call_builtin_ex)(msl_interface_impl_t*, rvalue_t*, const char*, instance_t*, instance_t*, rvalue_t*, size_t);
 
     int(*create_callback)(module_t* module, EVENT_TRIGGERS trigger, void* routine, int32_t priority);
     int(*remove_callback)(module_t* module, void* routine);
@@ -95,7 +95,7 @@ struct msl_interface_s
 
 struct msl_interface_impl_s
 {
-    msl_interface_t msl_interface;
+    msl_interface_t intf;
 
     // Dictates whether the first stage of initializing completed already.
     bool first_init_complete;
@@ -179,7 +179,7 @@ struct msl_interface_impl_s
     module_callback_descriptor_t* registered_callbacks;
 
     // === Internal functions ===
-    int(*extract_function_entry)(size_t index, char** function_name, TRoutine* function_routine, int32_t* argument_count);
+    int(*extract_function_entry)(msl_interface_impl_t*, size_t, char**, TRoutine*, int32_t*);
     int(*create_callback_descriptor)(module_t* module, EVENT_TRIGGERS trigger, void* routine, int32_t priority, module_callback_descriptor_t* descriptor);
     int(*add_to_callback_list)(module_callback_descriptor_t* descriptor);
     int(*find_descriptor)(module_callback_descriptor_t* descriptor, module_callback_descriptor_t* element);
@@ -195,5 +195,6 @@ struct msl_interface_impl_s
 extern msl_interface_impl_t global_module_interface;
 
 FUNC_HASH_STR(TRoutine)
+FUNC_HASH_STR(size_t)
 
 #endif  /* !INTERFACE_H_ */
