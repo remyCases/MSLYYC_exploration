@@ -46,6 +46,7 @@ typedef struct SS_CAT_UND(hm, K, V, s) {        \
     int32_t current_mask;                       \
     int32_t grow_threshold;                     \
     HASHMAP_ELMT_TYPE(K, V)* elements;          \
+	void(*delete_value)(K* key, V* value);      \
 } HASHMAP_TYPE(K, V);
 
 #define HASHMAP_PTR(K, V)                       \
@@ -55,6 +56,7 @@ typedef struct SS_CAT_UND(hm, K, V, ptr_s) {    \
     int32_t current_mask;                       \
     int32_t grow_threshold;                     \
     HASHMAP_ELMT_TYPE_PTR(K, V)* elements;      \
+	void(*delete_value)(K* key, V* value);      \
 } HASHMAP_TYPE_PTR(K, V);
 
 #define HASHMAP_STR(V)                          \
@@ -64,6 +66,7 @@ typedef struct SS_CAT_UND(hm, str, V, s) {      \
     int32_t current_mask;                       \
     int32_t grow_threshold;                     \
     HASHMAP_ELMT_TYPE_STR(V)* elements;         \
+	void(*delete_value)(char* key, V* value);   \
 } HASHMAP_TYPE_STR(V);
 
 #define GET_CONTAINER_N(K, V) S_CAT_UND(get_container, K, V)
@@ -175,6 +178,21 @@ typedef struct S_CAT_UND(ll, T, s) {    \
     int32_t count;                      \
     int32_t delete_type;                \
 } LINKEDLIST_TYPE(T);
+
+#define OLINKEDLIST_TYPE(T) S_CAT_UND(oll, T, t)
+#define OLINKEDLIST(T)                  \
+typedef struct S_CAT_UND(oll, T, s) {   \
+    T* first;                           \
+    T* last;                            \
+    int32_t count;                      \
+} OLINKEDLIST_TYPE(T);
+
+#define ARRAY_STRUCTURE_TYPE(T) S_CAT_UND(as, T, t)
+#define ARRAY_STRUCTURE(T)               \
+typedef struct S_CAT_UND(as, T, s) {     \
+    int32_t length;                      \
+    T* array;                            \
+} ARRAY_STRUCTURE_TYPE(T);
 
 hash_t hash_key_int(int key);
 hash_t hash_key_ptr(void* key);
