@@ -161,9 +161,10 @@ int remove_callback(module_t* module, void* routine)
 
 int print_callback()
 {
-	printf("Size: %p\n", registered_callbacks.size);
+	printf("Size: %lld\n", registered_callbacks.size);
 	for(size_t i = 0; i < registered_callbacks.size; i++)
 	{
 		printf("Routine: %p\n", registered_callbacks.arr[i].routine);
 	}
+	return MSL_SUCCESS;
 }
