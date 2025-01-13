@@ -21,5 +21,12 @@
 
 #define COMPILE_TIME_ASSERT(e)          COMPILE_TIME_ASSERT_(e)
 #define COMPILE_TIME_ASSERT_(e)         typedef char assertion_##__LINE__[(e) ? 1 : -1]
-
+#define RUNTIME_ASSERT(e)                                           \
+    do {                                                            \
+        if (!(e)) {                                                 \
+            printf("Assertion failed: %s\nFile: %s\nLine: %d\n",    \
+                   STR(e), __FILE__, __LINE__);                     \
+            abort();                                                \
+        }                                                           \
+    } while(0)
 #endif  /* !UTILS_MACRO_H_ */
