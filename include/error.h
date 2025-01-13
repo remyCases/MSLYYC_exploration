@@ -21,16 +21,17 @@
     X(MSL_NULL_BUFFER, __VA_ARGS__)             \
     X(MSL_ALLOCATION_ERROR, __VA_ARGS__)        \
     X(MSL_OBJECT_ALREADY_EXISTS, __VA_ARGS__)   \
+    X(MSL_OBJECT_NOT_FOUND, __VA_ARGS__)        \
     X(MSL_OBJECT_NOT_IN_LIST, __VA_ARGS__)      \
     X(MSL_UNKNWON_ERROR, __VA_ARGS__)           \
 
-#define LOG_ON_ERR(F, ...) error_print(STR(F), __LINE__, F(__VA_ARGS__))
+#define LOG_ON_ERR(F, ...) error_print(STR(F), __FILE__, __LINE__, F(__VA_ARGS__))
 
 typedef enum ERROR_MLS_ {
     MACRO_ERROR(TO_ENUM)
 } ERROR_MLS;
 
 char* error_str(int status);
-int error_print(char* function_name, int nline, int status);
+int error_print(char* function_name, char* nfile, int nline, int status);
 
 #endif  /* !ERROR_H_ */

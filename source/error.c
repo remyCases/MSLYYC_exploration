@@ -13,11 +13,11 @@ char* error_str(int status)
     }
 }
 
-int error_print(char* function_name, int nline, int status)
+int error_print(char* function_name, char* nfile, int nline, int status)
 {
     switch(status) 
     {
-        MACRO_ERROR(TO_CASE_PRINT, function_name, nline)
+        MACRO_ERROR(TO_CASE_PRINT, function_name, nfile, nline)
         default:;
     }
 
