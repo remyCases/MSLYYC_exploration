@@ -13,6 +13,10 @@
 typedef struct rfunction_s rfunction_t;
 typedef struct rfunction_string_ref_s rfunction_string_ref_t;
 typedef struct rfunction_string_full_s rfunction_string_full_t;
+typedef struct rvariable_routine_s rvariable_routine_t;
+
+typedef bool(*FNGetVariable)(instance_t* instance, int index, rvalue_t* value);
+typedef bool(*FNSetVariable)(instance_t* instance, int index, rvalue_t* Value);
 
 struct rfunction_string_full_s
 {
@@ -46,6 +50,17 @@ struct rfunction_s
 };
 #ifdef _WIN64
 	COMPILE_TIME_ASSERT(sizeof(rfunction_t) == 80);
+#endif // _WIN64
+
+struct rvariable_routine_s
+{
+    const char* name;
+    FNGetVariable get_variable;
+    FNSetVariable set_variable;
+    bool can_be_set;
+};
+#ifdef _WIN64
+	COMPILE_TIME_ASSERT(sizeof(rvariable_routine_t) == 32);
 #endif // _WIN64
 
 rfunction_string_full_t get_index_full(rfunction_t* function, size_t index);
