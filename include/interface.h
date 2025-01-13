@@ -13,8 +13,9 @@
 #include "callback.h"
 #include "runner_interface.h"
 
-HASH_STR(TRoutine)
-HASH_STR(size_t)
+typedef const char* str;
+HASH(str, TRoutine)
+HASH(str, size_t)
 
 typedef enum CM_COLOR CM_COLOR;
 
@@ -142,11 +143,11 @@ struct msl_interface_impl_s
 
     // Cache used for lookups of builtin functions (room_goto, etc.)
     // key = name, value = function pointer
-    HASHMAP_TYPE_STR(TRoutine) builtin_function_cache;
+    HASHMAP_TYPE(str, TRoutine) builtin_function_cache;
 
     // Cache used for lookups of builtin variables (xprevious, etc.)
     // key = name, value = index in the m_BuiltinArray
-    HASHMAP_TYPE_STR(size_t) builtin_variable_cache;
+    HASHMAP_TYPE(str, size_t) builtin_variable_cache;
 
     // D3D11 stuff
     IDXGISwapChain* engine_swapchain;
@@ -194,7 +195,7 @@ struct msl_interface_impl_s
 
 extern msl_interface_impl_t global_module_interface;
 
-FUNC_HASH_STR(TRoutine)
-FUNC_HASH_STR(size_t)
+FUNC_HASH(str, TRoutine)
+FUNC_HASH(str, size_t)
 
 #endif  /* !INTERFACE_H_ */

@@ -60,12 +60,18 @@ typedef void(*TRoutine)(rvalue_t* result, instance_t* self, instance_t* other, i
 typedef void(*PFN_YYObjectBaseAdd)(yyobject_base_t* object, const char* name, const rvalue_t* value, int flags);
 typedef int(*PFN_FindAllocSlot)(yyobject_base_t* object, const char* name);
 
-HASH_PTR(int32_t, rvalue_t)
-HASH_PTR(int, object_gm_t)
-HASH_PTR(int, event_t)
-HASH_PTR(int32_t, layer_t)
-HASH_PTR(int32_t, layer_element_base_t)
-HASH_PTR(int32_t, layer_instance_element_t)
+typedef rvalue_t* p_rvalue_t;
+typedef object_gm_t* p_object_gm_t;
+typedef event_t* p_event_t;
+typedef layer_t* p_layer_t;
+typedef layer_element_base_t* p_layer_element_base_t;
+typedef layer_instance_element_t* p_layer_instance_element_t;
+HASH(int32_t, p_rvalue_t)
+HASH(int, p_object_gm_t)
+HASH(int, p_event_t)
+HASH(int32_t, p_layer_t)
+HASH(int32_t, p_layer_element_base_t)
+HASH(int32_t, p_layer_instance_element_t)
 
 LINKEDLIST(instance_t)
 LINKEDLIST(layer_element_base_t)
@@ -406,10 +412,10 @@ struct room_internal_s
     const char* name;
     bool is_duplicate;
     LINKEDLIST_TYPE(layer_t) layers;
-    HASHMAP_TYPE_PTR(int32_t, layer_t) layer_lookup;
-    HASHMAP_TYPE_PTR(int32_t, layer_element_base_t) layer_element_lookup;
+    HASHMAP_TYPE(int32_t, p_layer_t) layer_lookup;
+    HASHMAP_TYPE(int32_t, p_layer_element_base_t) layer_element_lookup;
     layer_element_base_t* last_element_looked_up;
-    HASHMAP_TYPE_PTR(int32_t, layer_instance_element_t) instance_element_lookup;
+    HASHMAP_TYPE(int32_t, p_layer_instance_element_t) instance_element_lookup;
     int32_t* sequence_instance_ids;
     int32_t sequence_instance_id_count;
     int32_t sequence_instance_id_max;
@@ -494,7 +500,7 @@ struct yyobject_base_s
     FNGetOwnProperty get_own_property;
     FNDeleteProperty delete_property;
     FNDefineOwnProperty define_own_property;
-    HASHMAP_TYPE_PTR(int32_t, rvalue_t)* yyvars_map;
+    HASHMAP_TYPE(int32_t, p_rvalue_t)* yyvars_map;
     weak_ref_t** weak_ref;
     uint32_t weak_ref_count;
     uint32_t variable_count;
@@ -517,8 +523,8 @@ struct object_gm_s
 {
     const char* name;
     object_gm_t* parent_object;
-    HASHMAP_TYPE_PTR(int, object_gm_t)* children_map;
-    HASHMAP_TYPE_PTR(int, event_t)* events_map;
+    HASHMAP_TYPE(int, p_object_gm_t)* children_map;
+    HASHMAP_TYPE(int, p_event_t)* events_map;
     physics_data_gm_t physics_data;
     LINKEDLIST_TYPE(instance_t) instances;
     LINKEDLIST_TYPE(instance_t) instances_recursive;
@@ -633,9 +639,12 @@ struct instance_s
     };
 };
 
-FUNC_HASH_PTR(int32_t, rvalue_t)
-FUNC_HASH_PTR(int, object_gm_t)
-FUNC_HASH_PTR(int, event_t)
+FUNC_HASH(int32_t, p_rvalue_t)
+FUNC_HASH(int, p_object_gm_t)
+FUNC_HASH(int, p_event_t)
+FUNC_HASH(int32_t, p_layer_t)
+FUNC_HASH(int32_t, p_layer_element_base_t)
+FUNC_HASH(int32_t, p_layer_instance_element_t)
 
 int init_rvalue(rvalue_t* rvalue);
 int init_rvalue_bool(rvalue_t* rvalue, bool value);
