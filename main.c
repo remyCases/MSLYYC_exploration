@@ -11,7 +11,6 @@
 #include "include/pe_parser.h"
 #include "include/callback.h"
 #include "include/interface.h"
-#include "include/module.h"
 #include "include/function_wrapper.h"
 #include "include/object.h"
 #include <winnt.h>

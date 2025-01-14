@@ -3,7 +3,7 @@
 // This file is part of MSLYYC_exploration project from https://github.com/remyCases/MSLYYC_exploration.
 
 #include "../include/error.h"
-#include "../include/callback.h"
+#include "../include/interface.h"
 
 #define DEFAULT_CAPACITY 2
 static module_callback_descriptor_array_t registered_callbacks;
