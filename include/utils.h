@@ -126,6 +126,12 @@ int GROW(K, V)(HASHMAP(K, V)* hashmap)                                          
     _HASHMAP_ELMT(K, V)     \
     _HASHMAP(K, V)          \
 
+#define DEF_FUNC_HASH(K, V) \
+    int GET_CONTAINER(K, V)(HASHMAP(K, V)*, K, HASHMAP_ELMT(K, V)*);  \
+    int GET_VALUE(K, V)(HASHMAP(K, V)*, K, V*);                       \
+    int INSERT(K, V)(HASHMAP(K, V)*, K, V);                           \
+    int GROW(K, V)(HASHMAP(K, V)*);   
+
 #define FUNC_HASH(K, V) \
     _GET_CONTAINER(K, V) \
     _GET_VALUE(K, V)     \
@@ -221,6 +227,12 @@ int ADD_VECTOR(T)(VECTOR(T)* vec, T* elmt) {        \
     _FREE_VECTOR(T)     \
     _RESIZE_VECTOR(T)   \
     _ADD_VECTOR(T)
+
+#define DEF_FUNC_VEC(T)     \
+    int INIT_VECTOR(T)(VECTOR(T)*);     \
+    int FREE_VECTOR(T)(VECTOR(T)*);     \
+    int RESIZE_VECTOR(T)(VECTOR(T)*);   \
+    int ADD_VECTOR(T)(VECTOR(T)*, T*);
 
 #define HASH_KEY(K) CAT_UND(HASH_KEY, K)
 #define HASH_KEY_str hash_key_str

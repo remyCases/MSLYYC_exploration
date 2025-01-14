@@ -37,9 +37,15 @@ typedef int(*LoaderEntry)(module_t*, void*(*pp_get_framework_routine)(const char
 typedef void(*ModuleCallback)(module_t*, MODULE_OPERATION_TYPE, operation_info_t*);
 
 DEF_HASHMAP(str, TRoutine)
+DEF_FUNC_HASH(str, TRoutine)
 DEF_HASHMAP(str, size_t)
+DEF_FUNC_HASH(str, size_t)
 DEF_VECTOR(module_callback_descriptor_t)
+DEF_FUNC_VEC(module_callback_descriptor_t) 
 DEF_VECTOR(module_t)
+DEF_FUNC_VEC(module_t) 
+DEF_VECTOR(msl_interface_table_entry_t)
+DEF_FUNC_VEC(msl_interface_table_entry_t) 
 
 enum EVENT_TRIGGERS
 {
@@ -349,7 +355,7 @@ struct module_s
     LoaderEntry framework_initialize;
 
     // Interfaces exposed by the module
-    msl_interface_table_entry_t* interface_table;
+    VECTOR(msl_interface_table_entry_t) interface_table;
 
     // Memory allocated by the module
     // 

@@ -11,6 +11,7 @@ FUNC_HASH(str, TRoutine)
 FUNC_HASH(str, size_t)
 FUNC_VEC(module_callback_descriptor_t)
 FUNC_VEC(module_t)
+FUNC_VEC(msl_interface_table_entry_t) 
 
 int extract_function_entry(msl_interface_impl_t* msl_interface, size_t index, const char** function_name, TRoutine* function_routine, int32_t* argument_count)
 {
