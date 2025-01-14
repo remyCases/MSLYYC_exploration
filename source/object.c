@@ -7,21 +7,21 @@
 
 VECTOR(module_t) global_module_list;
 
-int ob_create_interface(module_t* module, msl_interface_base_t* msl_interface, const char* interface_name);
-int ob_interface_exists(const char* interface_name);
-int obp_destroy_interface_by_name(const char* interface_name);
-int obp_add_interface_to_table(module_t* module, msl_interface_table_entry_t* entry);
-int obp_destroy_interface(module_t* module, msl_interface_base_t* msl_interface, bool notify, bool remove_from_list);
-int obp_lookup_interface_owner(const char* interface_name, bool case_insensitive, module_t** module, msl_interface_table_entry_t** table_entry);
+int ob_create_interface(module_t*, msl_interface_base_t*, const char*);
+int ob_interface_exists(const char*);
+int obp_destroy_interface_by_name(const char*);
+int obp_add_interface_to_table(module_t*, msl_interface_table_entry_t*);
+int obp_destroy_interface(module_t*, msl_interface_base_t*, bool, bool);
+int obp_lookup_interface_owner(const char*, bool, module_t**, msl_interface_table_entry_t**);
 
-int ob_create_interface(module_t* module, msl_interface_base_t* msl_interface, const char* interface_name)
+int ob_create_interface(module_t* module, msl_interface_base_t* interface_base, const char* interface_name)
 {
     int last_status = MSL_SUCCESS;
     last_status = LOG_ON_ERR(ob_interface_exists, interface_name);
     if (last_status) return MSL_OBJECT_ALREADY_EXISTS;
 
     msl_interface_table_entry_t table_entry = {
-        .intf = msl_interface,
+        .intf = interface_base,
         .interface_name = interface_name,
         .owner_module = module,
     };
@@ -30,7 +30,7 @@ int ob_create_interface(module_t* module, msl_interface_base_t* msl_interface, c
     // and that it succeeds at doing so. We don't want an
     // uninitialized, half-broken interface exposed!
 
-    last_status = LOG_ON_ERR(msl_interface->create);
+    last_status = LOG_ON_ERR(interface_base->create);
     if (last_status) return last_status;
 
     last_status = LOG_ON_ERR(obp_add_interface_to_table, module, &table_entry);
@@ -128,7 +128,7 @@ int obp_lookup_interface_owner(const char* interface_name, bool case_insensitive
     return MSL_OBJECT_NOT_FOUND;
 }
 
-int ob_get_interface(const char* interface_name, msl_interface_base_t** msl_interface)
+int ob_get_interface(const char* interface_name, msl_interface_base_t** interface_base)
 {
     int last_status = MSL_SUCCESS;
     module_t* owner_module = NULL;
@@ -137,6 +137,6 @@ int ob_get_interface(const char* interface_name, msl_interface_base_t** msl_inte
     last_status = LOG_ON_ERR(obp_lookup_interface_owner, interface_name, true, &owner_module, &interface_entry);
     if (last_status) return last_status;
 
-    *msl_interface = interface_entry->intf;
+    *interface_base = interface_entry->intf;
     return MSL_SUCCESS;
 }
