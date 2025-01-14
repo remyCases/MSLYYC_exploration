@@ -24,6 +24,7 @@ typedef enum CM_COLOR CM_COLOR;
 typedef struct msl_interface_base_s msl_interface_base_t;
 typedef struct msl_interface_s msl_interface_t;
 typedef struct msl_interface_impl_s msl_interface_impl_t;
+typedef struct msl_interface_table_entry_s msl_interface_table_entry_t;
 
 enum CM_COLOR
 {
@@ -69,6 +70,8 @@ struct msl_interface_s
     int(*get_global_instance)(instance_t** instance);
     int(*call_builtin)(const char* function_name, rvalue_t* args, size_t arg_size, rvalue_t* out);
     int(*call_builtin_ex)(msl_interface_impl_t*, rvalue_t*, const char*, instance_t*, instance_t*, rvalue_t*, size_t);
+    
+    void(*print_warning)(const char*);
 
     int(*create_callback)(module_t* module, EVENT_TRIGGERS trigger, void* routine, int32_t priority);
     int(*remove_callback)(module_t* module, void* routine);
@@ -197,12 +200,19 @@ struct msl_interface_impl_s
 
 extern msl_interface_impl_t global_module_interface;
 
-int init_rvalue(rvalue_t*);
-int init_rvalue_bool(rvalue_t*, bool);
-int init_rvalue_double(rvalue_t*, double value);
-int init_rvalue_i64(rvalue_t*, int64_t);
-int init_rvalue_i32(rvalue_t*, int32_t);
-int init_rvalue_instance(rvalue_t*, instance_t*);
-int init_rvalue_str(rvalue_t**, const char*);
+struct msl_interface_table_entry_s
+{
+    module_t* owner_module;
+    const char* interface_name;
+    msl_interface_base_t* intf;
+};
+
+rvalue_t init_rvalue(void);
+rvalue_t init_rvalue_bool(bool);
+rvalue_t init_rvalue_double(double);
+rvalue_t init_rvalue_i64(int64_t);
+rvalue_t init_rvalue_i32(int32_t);
+rvalue_t init_rvalue_instance(instance_t*);
+rvalue_t init_rvalue_str(const char*);
 int init_rvalue_str_interface(rvalue_t*, const char*, msl_interface_impl_t*);
 #endif  /* !INTERFACE_H_ */
