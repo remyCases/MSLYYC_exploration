@@ -1400,8 +1400,5 @@ typedef struct yyrunner_interface_s
 
 } yyrunner_interface_t;
 
-void create_yyrunner_interface(yyrunner_interface_t* self) 
-{
-    memset(self, 0, sizeof(*self));
-}
+void create_yyrunner_interface(yyrunner_interface_t* self);
 #endif  /* !RUNNER_INTERFACE_H_ */
