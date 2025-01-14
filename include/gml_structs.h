@@ -639,19 +639,4 @@ struct instance_s
     };
 };
 
-FUNC_HASH(int32_t, p_rvalue_t)
-FUNC_HASH(int, p_object_gm_t)
-FUNC_HASH(int, p_event_t)
-FUNC_HASH(int32_t, p_layer_t)
-FUNC_HASH(int32_t, p_layer_element_base_t)
-FUNC_HASH(int32_t, p_layer_instance_element_t)
-
-int init_rvalue(rvalue_t* rvalue);
-int init_rvalue_bool(rvalue_t* rvalue, bool value);
-int init_rvalue_double(rvalue_t* rvalue, double value);
-int init_rvalue_i64(rvalue_t* rvalue, int64_t value);
-int init_rvalue_i32(rvalue_t* rvalue, int32_t value);
-int init_rvalue_instance(rvalue_t* rvalue, instance_t* object);
-int init_rvalue_str(rvalue_t** rvalue, const char* value);
-int init_rvalue_str_interface(rvalue_t* rvalue, const char* value, msl_interface_t* msl_interface);
 #endif  /* !GML_STRUCTS_H_ */

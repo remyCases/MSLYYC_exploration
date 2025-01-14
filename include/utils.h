@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <limits.h>
+#include <stdlib.h>
 #include "utils_macro.h"
 
 typedef uint32_t hash_t;
@@ -35,7 +36,7 @@ typedef struct SS_CAT_UND(hm, K, V, s) {        \
 #define GET_CONTAINER(K, V)                                                                         \
 ERROR_MLS GET_CONTAINER_N(K, V)(HASHMAP_TYPE(K, V)* hashmap, K key, HASHMAP_ELMT_TYPE(K, V)* value) \
 {                                                                                                   \
-    hash_t value_hash = hash_key_int(key);                                                          \
+    hash_t value_hash = HASH_KEY(K)(key);                                                          \
     int32_t ideal_position = (int)(value_hash & hashmap->current_mask);                             \
     for (HASHMAP_ELMT_TYPE(K, V) current_element = hashmap->elements[ideal_position];               \
         current_element.hash != 0;                                                                  \
@@ -67,7 +68,7 @@ ERROR_MLS INSERT_N(K, V)(HASHMAP_TYPE(K, V)* hashmap, K key, V value)           
         /* TODO: Implement grow function if needed */                                                           \
         return MSL_INSUFFICIENT_MEMORY;                                                                         \
     }                                                                                                           \
-    hash_t value_hash = hash_key_int(key);                                                                      \
+    hash_t value_hash = HASH_KEY(K)(key);                                                                      \
     if (value_hash == 0) value_hash = 1; /* Reserve 0 for empty slots */                                        \
     int32_t ideal_position = (int)(value_hash & hashmap->current_mask);                                         \
     int32_t position = ideal_position;                                                                          \
@@ -155,7 +156,12 @@ typedef struct S_CAT_UND(as, T, s) {     \
     T* array;                            \
 } ARRAY_STRUCTURE_TYPE(T);
 
+#define HASH_KEY(K) CAT_UND(HASH_KEY, K)
+#define HASH_KEY_str hash_key_str
+#define HASH_KEY_int hash_key_int
+#define HASH_KEY_int32_t hash_key_int
+
 hash_t hash_key_int(int key);
 hash_t hash_key_ptr(void* key);
-hash_t hash_key_char(const char* key);
+hash_t hash_key_str(const char* key);
 #endif  /* !UTILS_H_ */

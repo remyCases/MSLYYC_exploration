@@ -8,6 +8,7 @@
 
 typedef enum EBUFFER_TYPE EBUFFER_TYPE;
 typedef enum EBUFFER_SEEK EBUFFER_SEEK;
+typedef enum EBUFFER_FORMAT EBUFFER_FORMAT;
 
 typedef void* HYYMUTEX;
 typedef void* HSPRITEASYNC;
@@ -42,6 +43,15 @@ enum EBUFFER_SEEK
     EBUFFER_Start = 0x0,
     EBUFFER_Relative = 0x1,
     EBUFFER_End = 0x2,
+};
+
+enum EBUFFER_FORMAT {
+    EBUFFER_Format_Fixed = 0,
+    EBUFFER_Format_Grow = 1,
+    EBUFFER_Format_Wrap = 2,
+    EBUFFER_Format_Fast = 3,
+    EBUFFER_Format_VBuffer = 4,
+    EBUFFER_Format_Network = 5,
 };
 
 struct ibuffer_vtable_s
@@ -807,7 +817,7 @@ typedef struct yyrunner_interface_s
         * - EBUFFER_Format_VBuffer:  4
         * - EBUFFER_Format_Network:  5
         */
-    int (*CreateBuffer)(int _size, enum EBUFFER_Format _bf, int _alignment);
+    int (*CreateBuffer)(int _size, EBUFFER_FORMAT _bf, int _alignment);
 
 
     // ########################################################################

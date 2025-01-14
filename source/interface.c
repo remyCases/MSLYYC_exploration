@@ -4,9 +4,11 @@
 
 #include "../include/error.h"
 #include "../include/interface.h"
-#include "../include/gml_structs.h"
 #include "../include/pe_parser.h"
 #include "d3d11.h"
+
+FUNC_HASH(str, TRoutine)
+FUNC_HASH(str, size_t)
 
 int extract_function_entry(msl_interface_impl_t* msl_interface, size_t index, const char** function_name, TRoutine* function_routine, int32_t* argument_count)
 {
@@ -263,4 +265,80 @@ int call_builtin_ex(msl_interface_impl_t* msl_interface, rvalue_t* result, const
 	);
 
 	return MSL_SUCCESS;
+}
+
+int init_rvalue(rvalue_t* rvalue)
+{
+	rvalue->real = 0;
+	rvalue->flags = 0;
+	rvalue->kind = VALUE_UNDEFINED;
+
+    return MSL_SUCCESS;
+}
+
+int init_rvalue_bool(rvalue_t* rvalue, bool value)
+{
+	rvalue->real = (double)(value);
+	rvalue->flags = 0;
+	rvalue->kind = VALUE_BOOL;
+
+    return MSL_SUCCESS;
+}
+
+int init_rvalue_double(rvalue_t* rvalue, double value)
+{
+	rvalue->real = value;
+	rvalue->flags = 0;
+	rvalue->kind = VALUE_REAL;
+
+    return MSL_SUCCESS;
+}
+
+int init_rvalue_i64(rvalue_t* rvalue, int64_t value)
+{
+	rvalue->i64 = value;
+	rvalue->flags = 0;
+	rvalue->kind = VALUE_INT64;
+
+    return MSL_SUCCESS;
+}
+
+int init_rvalue_i32(rvalue_t* rvalue, int32_t value)
+{
+	rvalue->i32 = value;
+	rvalue->flags = 0;
+	rvalue->kind = VALUE_INT32;
+
+    return MSL_SUCCESS;
+}
+
+int init_rvalue_instance(rvalue_t* rvalue, instance_t* object)
+{
+	rvalue->object = object;
+	rvalue->flags = 0;
+	rvalue->kind = VALUE_OBJECT;
+
+    return MSL_SUCCESS;
+}
+
+int init_rvalue_str(rvalue_t** rvalue, const char* value)
+{
+	// Init to empty
+	*rvalue = (rvalue_t*)value;
+
+    return MSL_SUCCESS;
+}
+
+int init_rvalue_str_interface(rvalue_t* rvalue, const char* value, msl_interface_impl_t* msl_interface)
+{
+	// Initialize it to just empty stuff
+	init_rvalue(rvalue);
+
+	// Let's not crash on invalid interfaces provided
+	if (!msl_interface) return MSL_MODULE_INTERNAL_ERROR;
+
+	// We can ignore this, because if it fails, we're just initialized to UNSET
+	msl_interface->intf.string_to_rvalue(value, rvalue);
+
+    return MSL_SUCCESS;
 }

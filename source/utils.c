@@ -21,7 +21,7 @@ hash_t hash_key_ptr(void* key)
     return (((unsigned long long)((uintptr_t)(key)) >> 8) + 1) & INT_MAX;
 };
 
-hash_t hash_key_char(const char* key)
+hash_t hash_key_str(const char* key)
 {
     // https://github.com/jwerle/murmurhash.c - Licensed under MIT
     size_t len = strlen(key);

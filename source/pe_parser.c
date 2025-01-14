@@ -2,10 +2,11 @@
 // See LICENSE file for extended copyright information.
 // This file is part of MSLYYC_exploration project from https://github.com/remyCases/MSLYYC_exploration.
 
+#include "Windows.h"
+#include <stdint.h>
+#include "inttypes.h"
 #include "../include/pe_parser.h"
 #include "../include/error.h"
-#include "Windows.h"
-#include "inttypes.h"
 
 #define RVA2VA(TYPE, BASE, RVA) (TYPE)((ULONG_PTR)BASE + RVA)
 

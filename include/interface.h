@@ -6,6 +6,8 @@
 #define INTERFACE_H_
 
 #include "Windows.h"
+#include "dxgi.h"
+#include "d3d11.h"
 #include "gml_structs.h"
 #include "tool.h"
 #include "utils.h"
@@ -75,7 +77,7 @@ struct msl_interface_s
     int(*enum_instance_members)(rvalue_t instance, bool(*enum_function)(const char* member_name, rvalue_t* value));
 
     int(*rvalue_to_string)(rvalue_t* value, char** string);
-    int(*string_to_rvalue)(char* string, rvalue_t* value);
+    int(*string_to_rvalue)(const char* string, rvalue_t* value);
 
     int(*get_runner_interface)(yyrunner_interface_t* yyrunner_interface);
     void (*invalidate_all_caches)();
@@ -195,7 +197,12 @@ struct msl_interface_impl_s
 
 extern msl_interface_impl_t global_module_interface;
 
-FUNC_HASH(str, TRoutine)
-FUNC_HASH(str, size_t)
-
+int init_rvalue(rvalue_t*);
+int init_rvalue_bool(rvalue_t*, bool);
+int init_rvalue_double(rvalue_t*, double value);
+int init_rvalue_i64(rvalue_t*, int64_t);
+int init_rvalue_i32(rvalue_t*, int32_t);
+int init_rvalue_instance(rvalue_t*, instance_t*);
+int init_rvalue_str(rvalue_t**, const char*);
+int init_rvalue_str_interface(rvalue_t*, const char*, msl_interface_impl_t*);
 #endif  /* !INTERFACE_H_ */
