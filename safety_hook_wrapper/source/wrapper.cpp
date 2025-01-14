@@ -4,7 +4,7 @@
 
 #include "wrapper.hpp"
 
-WrapperSafetyHookInline::WrapperSafetyHookInline(void* target, void* destination, SafetyHookInline::Flags flags = SafetyHookInline::Default) {
+WrapperSafetyHookInline::WrapperSafetyHookInline(void* target, void* destination, SafetyHookInline::Flags flags) {
     *safety_hook_inline_instance = safetyhook::create_inline(target, destination, flags);
 }
 
@@ -12,7 +12,7 @@ WrapperSafetyHookInline::~WrapperSafetyHookInline() {
     delete safety_hook_inline_instance;
 }
 
-WrapperSafetyHookMid::WrapperSafetyHookMid(void* target, safetyhook::MidHookFn destination, SafetyHookMid::Flags flags = SafetyHookMid::Default) {
+WrapperSafetyHookMid::WrapperSafetyHookMid(void* target, safetyhook::MidHookFn destination, SafetyHookMid::Flags flags) {
     *safety_hook_mid_instance = safetyhook::create_mid(target, destination, flags);
 }
 

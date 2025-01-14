@@ -6,8 +6,8 @@
 #include "wrapper.hpp"
 
 extern "C" {
-    safety_hook_inline_t safety_hook_inline_create(void* target, void* destination, SafetyHookInline::Flags flags = SafetyHookInline::Default) {
-        return reinterpret_cast<WrapperSafetyHookInline*>(new WrapperSafetyHookInline(target, destination, flags));
+    safety_hook_inline_t safety_hook_inline_create(void* target, void* destination, int flags) {
+        return reinterpret_cast<WrapperSafetyHookInline*>(new WrapperSafetyHookInline(target, destination, static_cast<SafetyHookInline::Flags>(flags)));
     }
 
     void safety_hook_inline_destroy(safety_hook_inline_t handle) {
@@ -18,8 +18,8 @@ extern "C" {
         return reinterpret_cast<WrapperSafetyHookInline*>(handle)->someOperation(value);
     }
 
-    safety_hook_mid_t safety_hook_mid_create(void* target, safetyhook::MidHookFn destination, SafetyHookMid::Flags flags = SafetyHookMid::Default) {
-        return reinterpret_cast<WrapperSafetyHookMid*>(new WrapperSafetyHookMid(target, destination, flags));
+    safety_hook_mid_t safety_hook_mid_create(void* target, void* destination, int flags) {
+        return reinterpret_cast<WrapperSafetyHookMid*>(new WrapperSafetyHookMid(target, reinterpret_cast<safetyhook::MidHookFn>(destination), static_cast<SafetyHookMid::Flags>(flags)));
     }
 
     void safety_hook_mid_destroy(safety_hook_mid_t handle) {

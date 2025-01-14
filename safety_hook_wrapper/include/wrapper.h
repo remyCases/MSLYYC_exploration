@@ -11,13 +11,13 @@ extern "C" {
 
 typedef struct WrapperSafetyHookInline* safety_hook_inline_t;
 
-safety_hook_inline_t safety_hook_inline_create(void* target, void* destination, SafetyHookInline::Flags flags = SafetyHookInline::Default);
+safety_hook_inline_t safety_hook_inline_create(void* target, void* destination, int flags);
 void safety_hook_inline_destroy(safety_hook_inline_t handle);
 int safety_hook_inline_some_operation(safety_hook_inline_t handle, int value);
 
 typedef struct WrapperSafetyHookMid* safety_hook_mid_t;
 
-safety_hook_mid_t safety_hook_mid_create(void* target, safetyhook::MidHookFn destination, SafetyHookMid::Flags flags = SafetyHookMid::Default);
+safety_hook_mid_t safety_hook_mid_create(void* target, void* destination, int flags);
 void safety_hook_mid_destroy(safety_hook_mid_t handle);
 int safety_hook_mid_some_operation(safety_hook_mid_t handle, int value);
 

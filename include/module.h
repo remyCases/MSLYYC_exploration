@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <Windows.h>
-#include "../safety_hook_wrapper/wrapper.h"
+#include "../safety_hook_wrapper/include/wrapper.h"
 
 typedef enum MODULE_OPERATION_TYPE MODULE_OPERATION_TYPE;
 
