@@ -5,6 +5,8 @@
 #include "../include/object.h"
 #include "../include/interface.h"
 
+VECTOR(module_t) global_module_list;
+
 int obp_lookup_interface_owner(const char* interface_name, bool case_insensitive, module_t** module, msl_interface_table_entry_t** table_entry)
 {
     module_t* loaded_module = NULL;
@@ -42,7 +44,7 @@ int ob_get_interface(const char* interface_name, msl_interface_base_t** msl_inte
     module_t* owner_module = NULL;
     msl_interface_table_entry_t* interface_entry = NULL;
 
-    last_status = obp_lookup_interface_owner(interface_name, true, &owner_module, &interface_entry);
+    last_status = LOG_ON_ERR(obp_lookup_interface_owner, interface_name, true, &owner_module, &interface_entry);
     if (last_status) return last_status;
 
     *msl_interface = interface_entry->intf;

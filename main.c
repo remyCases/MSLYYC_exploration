@@ -51,7 +51,7 @@ int module_initialize(module_t* module, const char* module_path)
 {
     UNREFERENCED_PARAMETER(module_path);
 
-    int last_status = ob_get_interface("YYTK_Main", (msl_interface_base_t*)(global_msl_interface));
+    int last_status = LOG_ON_ERR(ob_get_interface, "YYTK_Main", (msl_interface_base_t**)(&global_msl_interface));
     if (last_status) return MSL_MODULE_DEPENDENCY_NOT_RESOLVED;
 
     global_msl_interface->print_warning("Hello Mod");

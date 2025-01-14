@@ -287,7 +287,7 @@ struct msl_interface_table_entry_s
     const char* interface_name;
     msl_interface_base_t* intf;
 };
-typedef struct module_s 
+struct module_s 
 {
     union
     {
