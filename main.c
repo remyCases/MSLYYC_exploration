@@ -67,13 +67,11 @@ int main(int argc, char** argv)
     module_t module;
     int last_status = MSL_UNKNWON_ERROR;
 
-    last_status = LOG_ON_ERR(init_module_callbacks);
     if (argc == 1) path = "data/StoneShard.exe";
     else path = argv[1];
  
     last_status = LOG_ON_ERR(module_initialize, &module, path);
 
 	printf("[>] Execution complete\n");
-    last_status = LOG_ON_ERR(free_module_callbacks);
     return 0;
 }

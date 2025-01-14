@@ -6,7 +6,6 @@
 #define CALLBACK_H_
 
 #include <stdint.h>
-#include "interface.h"
 
 #define DISPATCH_CALLBACKS(T)                                                                                               \
 int dispatch_callbacks(msl_interface_impl_t* msl_interface_impl, EVENT_TRIGGERS trigger, FUNCTION_WRAPPER(T)* function) {   \

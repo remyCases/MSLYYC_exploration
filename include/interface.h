@@ -265,16 +265,18 @@ struct msl_interface_impl_s
 
     // === Internal functions ===
     int(*extract_function_entry)(msl_interface_impl_t*, size_t, char**, TRoutine*, int32_t*);
-    int(*create_callback_descriptor)(module_t* module, EVENT_TRIGGERS trigger, void* routine, int32_t priority, module_callback_descriptor_t* descriptor);
-    int(*add_to_callback_list)(module_callback_descriptor_t* descriptor);
-    int(*find_descriptor)(module_callback_descriptor_t* descriptor, module_callback_descriptor_t* element);
-    int(*remove_callback_from_list)(module_t* module, void* routine);
-    int(*callback_exists)(module_t* module, void* routine);;
+    int(*descriptor_comparator)(const void*, const void*);
+    int(*sort_module_callbacks)(msl_interface_impl_t*);
+    int(*create_callback_descriptor)(module_t*, EVENT_TRIGGERS, void*, int32_t, module_callback_descriptor_t*);
+    int(*add_to_callback_list)(msl_interface_impl_t*, module_callback_descriptor_t*);
+    int(*find_descriptor)(module_callback_descriptor_t*, module_callback_descriptor_t*);
+    int(*remove_callback_from_list)(msl_interface_impl_t*, module_t*, void*);
+    int(*callback_exists)(msl_interface_impl_t*, module_t*, void*);
 
     // TODO: DISPATCH_CALLBACKS
 
-    int (*fetch_D3D11_info)(ID3D11Device** device_object, IDXGISwapChain** swapchain);
-    int (*determine_function_entry_size)(size_t* size);
+    int (*fetch_D3D11_info)(ID3D11Device**, IDXGISwapChain**);
+    int (*determine_function_entry_size)(size_t*);
 };
 
 extern msl_interface_impl_t global_module_interface;
@@ -373,10 +375,4 @@ rvalue_t init_rvalue_i32(int32_t);
 rvalue_t init_rvalue_instance(instance_t*);
 rvalue_t init_rvalue_str(const char*);
 int init_rvalue_str_interface(rvalue_t*, const char*, msl_interface_impl_t*);
-
-int init_module_callbacks();
-int free_module_callbacks();
-int create_callback(module_t* module, EVENT_TRIGGERS trigger, void* routine, int32_t priority);
-int remove_callback(module_t* module, void* routine);
-int print_callback();
 #endif  /* !INTERFACE_H_ */

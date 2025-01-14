@@ -348,3 +348,125 @@ int init_rvalue_str_interface(rvalue_t* rvalue, const char* value, msl_interface
 
     return MSL_SUCCESS;
 }
+
+int descriptor_comparator(const void* first, const void* second) 
+{
+    int32_t first_priority = ((const module_callback_descriptor_t *)first)->priority;
+    int32_t second_priority  = ((const module_callback_descriptor_t *)second)->priority;
+    return first_priority  - second_priority ;
+}
+
+int sort_module_callbacks(msl_interface_impl_t* msl_interface)
+{
+	qsort(
+		msl_interface->registered_callbacks.arr, 
+		msl_interface->registered_callbacks.size, 
+		sizeof(module_callback_descriptor_t), msl_interface->descriptor_comparator);
+	return MSL_SUCCESS;
+}
+
+int find_descriptor(msl_interface_impl_t* msl_interface, module_callback_descriptor_t* descriptor, module_callback_descriptor_t* element)
+{
+	for(size_t i = 0; i < msl_interface->registered_callbacks.size; i++)
+	{
+		if (msl_interface->registered_callbacks.arr[i].routine == descriptor->routine && 
+			msl_interface->registered_callbacks.arr[i].owner_module == descriptor->owner_module &&
+			msl_interface->registered_callbacks.arr[i].trigger == descriptor->trigger &&
+			msl_interface->registered_callbacks.arr[i].priority == descriptor->priority)
+		{
+			*element = msl_interface->registered_callbacks.arr[i];
+			return MSL_SUCCESS;
+		}
+	}
+	element = NULL;
+	return MSL_OBJECT_NOT_IN_LIST;
+}
+
+int remove_callback_from_list(msl_interface_impl_t* msl_interface, module_t* module, void* routine)
+{
+	if (!msl_interface->registered_callbacks.size)
+	{
+		return MSL_NULL_BUFFER;
+	}
+
+	for(size_t i = 0; i < msl_interface->registered_callbacks.size; i++)
+	{
+		if (msl_interface->registered_callbacks.arr[i].routine == routine && msl_interface->registered_callbacks.arr[i].owner_module == module)
+		{
+			msl_interface->registered_callbacks.arr[i] = msl_interface->registered_callbacks.arr[msl_interface->registered_callbacks.size - 1];
+			msl_interface->registered_callbacks.size--;
+
+			return msl_interface->sort_module_callbacks(msl_interface);
+		}
+	}
+
+	return MSL_SUCCESS;
+}
+
+int callback_exists(msl_interface_impl_t* msl_interface, module_t* module, void* routine)
+{
+	for(size_t i = 0; i < msl_interface->registered_callbacks.size; i++)
+	{
+		if (msl_interface->registered_callbacks.arr[i].routine == routine && msl_interface->registered_callbacks.arr[i].owner_module == module) 
+			return MSL_SUCCESS;
+	}
+    return MSL_OBJECT_NOT_IN_LIST;
+}
+
+int create_callback_descriptor(module_t* module, EVENT_TRIGGERS trigger, void* routine, int32_t priority, module_callback_descriptor_t* descriptor)
+{
+    descriptor->owner_module = module;
+    descriptor->trigger = trigger;
+    descriptor->routine = routine;
+    descriptor->priority = priority;
+
+    return MSL_SUCCESS;
+}
+
+int add_to_callback_list(msl_interface_impl_t* msl_interface, module_callback_descriptor_t* descriptor)
+{
+	int status = MSL_SUCCESS;
+
+	status = ADD_VECTOR(module_callback_descriptor_t)(&msl_interface->registered_callbacks, descriptor);
+	if (status) return status;
+
+	return msl_interface->sort_module_callbacks(msl_interface);
+}
+
+int create_callback(msl_interface_impl_t* msl_interface, module_t* module, EVENT_TRIGGERS trigger, void* routine, int32_t priority)
+{
+    int status = MSL_SUCCESS;
+    if (msl_interface->callback_exists(msl_interface, module, routine) == MSL_SUCCESS) 
+    {
+        status = MSL_OBJECT_ALREADY_EXISTS;
+        return status;
+    }
+
+	module_callback_descriptor_t callback_descriptor;
+    if(msl_interface->create_callback_descriptor(module, trigger, routine, priority, &callback_descriptor))
+	{
+		status = MSL_ALLOCATION_ERROR;
+        return status;
+	}
+
+    return msl_interface->add_to_callback_list(msl_interface, &callback_descriptor);
+}
+
+int remove_callback(msl_interface_impl_t* msl_interface, module_t* module, void* routine)
+{
+	int status = MSL_SUCCESS;
+	status = msl_interface->callback_exists(msl_interface, module, routine);
+	if(status) return status;
+
+	return msl_interface->remove_callback_from_list(msl_interface, module, routine);
+}
+
+int print_callback(msl_interface_impl_t* msl_interface)
+{
+	printf("Size: %lld\n", msl_interface->registered_callbacks.size);
+	for(size_t i = 0; i < msl_interface->registered_callbacks.size; i++)
+	{
+		printf("Routine: %p\n", msl_interface->registered_callbacks.arr[i].routine);
+	}
+	return MSL_SUCCESS;
+}
