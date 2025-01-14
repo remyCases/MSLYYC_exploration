@@ -9,6 +9,8 @@
 #include <stdbool.h>
 #include <Windows.h>
 
+typedef int(*Entry)(module_t*,const char*);
+typedef int(*LoaderEntry)(module_t*, void*(*pp_get_framework_routine)(const char*), Entry, const char*, module_t*);
 typedef struct module_s 
 {
     union
@@ -57,6 +59,35 @@ typedef struct module_s
         void* pointer;
         unsigned long long address;
     } ImageEntrypoint;
+
+    // The initialize routine for the module
+    Entry module_initialize;
+
+    // The optional preinitialize routine for the module
+    Entry module_preinitialize;
+
+    // An unload routine for the module
+    Entry module_unload;
+
+    // The __AurieFrameworkInit function
+    LoaderEntry framework_initialize;
+
+    // Interfaces exposed by the module
+    std::list<AurieInterfaceTableEntry> InterfaceTable;
+
+    // Memory allocated by the module
+    // 
+    // If the allocation is made in the global context (i.e. by MmAllocatePersistentMemory)
+    // the allocation is put into g_ArInitialImage of the framework module.
+    std::list<AurieMemoryAllocation> MemoryAllocations;
+
+    // Functions hooked by the module by Mm*Hook functions
+    std::list<AurieInlineHook> InlineHooks;
+    std::list<AurieMidHook> MidHooks;
+
+    // If set, notifies the plugin of any module actions
+    AurieModuleCallback ModuleOperationCallback;
 } module_t;
 
+extern module_t* global_module_list;
 #endif  /* !MODULE_H_ */
