@@ -16,8 +16,9 @@ int obp_lookup_interface_owner(const char* interface_name, bool case_insensitive
 
 int ob_create_interface(module_t* module, msl_interface_base_t* msl_interface, const char* interface_name)
 {
-    if (LOG_ON_ERR(ob_interface_exists, interface_name))
-        return MSL_OBJECT_ALREADY_EXISTS;
+    int last_status = MSL_SUCCESS;
+    last_status = LOG_ON_ERR(ob_interface_exists, interface_name);
+    if (last_status) return MSL_OBJECT_ALREADY_EXISTS;
 
     msl_interface_table_entry_t table_entry = {
         .intf = msl_interface,
@@ -29,7 +30,7 @@ int ob_create_interface(module_t* module, msl_interface_base_t* msl_interface, c
     // and that it succeeds at doing so. We don't want an
     // uninitialized, half-broken interface exposed!
 
-    int last_status = LOG_ON_ERR(msl_interface->create);
+    last_status = LOG_ON_ERR(msl_interface->create);
     if (last_status) return last_status;
 
     last_status = LOG_ON_ERR(obp_add_interface_to_table, module, &table_entry);
@@ -38,20 +39,21 @@ int ob_create_interface(module_t* module, msl_interface_base_t* msl_interface, c
 
 int ob_interface_exists(const char* interface_name)
 {
+    int last_status = MSL_SUCCESS;
     module_t* containing_module = NULL;
     msl_interface_table_entry_t* table_entry = NULL;
     
     // If we find a module containing the interface, that means the interface exists!
     // ObpLookupInterfaceOwner will return AURIE_INTERFACE_NOT_FOUND if it doesn't exist.
-    int last_status = LOG_ON_ERR(obp_lookup_interface_owner, interface_name, true, &containing_module, &table_entry);
+    last_status = LOG_ON_ERR(obp_lookup_interface_owner, interface_name, true, &containing_module, &table_entry);
     return last_status;
 }
 
 int obp_destroy_interface_by_name(const char* interface_name)
 {
+    int last_status = MSL_SUCCESS;
     module_t* owner_module = NULL;
     msl_interface_table_entry_t* table_entry = NULL;
-    int last_status = MSL_SUCCESS;
 
     last_status = LOG_ON_ERR(obp_lookup_interface_owner, interface_name, true, &owner_module, &table_entry);
     if (last_status) return last_status;
@@ -62,7 +64,8 @@ int obp_destroy_interface_by_name(const char* interface_name)
 
 int obp_add_interface_to_table(module_t* module, msl_interface_table_entry_t* entry)
 {
-    int last_status = LOG_ON_ERR(ADD_VECTOR(msl_interface_table_entry_t), &module->interface_table, entry);
+    int last_status = MSL_SUCCESS;
+    last_status = LOG_ON_ERR(ADD_VECTOR(msl_interface_table_entry_t), &module->interface_table, entry);
     return last_status;
 }
 
