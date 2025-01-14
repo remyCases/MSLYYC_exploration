@@ -16,15 +16,12 @@
 #include "../safety_hook_wrapper/include/wrapper.h"
 
 typedef const char* str;
-HASH(str, TRoutine)
-HASH(str, size_t)
 
 typedef enum EVENT_TRIGGERS EVENT_TRIGGERS;
 typedef enum CM_COLOR CM_COLOR;
 typedef enum MODULE_OPERATION_TYPE MODULE_OPERATION_TYPE;
 
 typedef struct module_callback_descriptor_s module_callback_descriptor_t;
-typedef struct module_callback_descriptor_array_s module_callback_descriptor_array_t;
 typedef struct operation_info_s operation_info_t;
 typedef struct msl_inline_hook_s msl_inline_hook_t;
 typedef struct msl_mid_hook_s msl_mid_hook_t;
@@ -38,6 +35,11 @@ typedef struct msl_interface_table_entry_s msl_interface_table_entry_t;
 typedef int(*Entry)(module_t*,const char*);
 typedef int(*LoaderEntry)(module_t*, void*(*pp_get_framework_routine)(const char*), Entry, const char*, module_t*);	
 typedef void(*ModuleCallback)(module_t*, MODULE_OPERATION_TYPE, operation_info_t*);
+
+HASH(str, TRoutine)
+HASH(str, size_t)
+VECTOR(module_callback_descriptor_t)
+VECTOR(module_t)
 
 enum EVENT_TRIGGERS
 {
@@ -86,14 +88,6 @@ struct module_callback_descriptor_s
     int32_t priority;
     void* routine;
 };
-
-struct module_callback_descriptor_array_s
-{
-    module_callback_descriptor_t* arr;
-    size_t size;
-    size_t capacity;
-};
-
 
 struct operation_info_s
 {
@@ -267,7 +261,7 @@ struct msl_interface_impl_s
     PFN_FindAllocSlot find_alloc_slot;
 
     // Stores plugin callbacks
-    module_callback_descriptor_t* registered_callbacks;
+    VECTOR_TYPE(module_callback_descriptor_t) registered_callbacks;
 
     // === Internal functions ===
     int(*extract_function_entry)(msl_interface_impl_t*, size_t, char**, TRoutine*, int32_t*);
@@ -369,7 +363,7 @@ typedef struct module_s
     ModuleCallback module_operation_callback;
 };
 
-extern module_t* global_module_list;
+extern VECTOR_TYPE(module_t) global_module_list;
 
 rvalue_t init_rvalue(void);
 rvalue_t init_rvalue_bool(bool);

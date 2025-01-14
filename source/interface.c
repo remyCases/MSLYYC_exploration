@@ -9,6 +9,8 @@
 
 FUNC_HASH(str, TRoutine)
 FUNC_HASH(str, size_t)
+FUNC_VEC(module_callback_descriptor_t)
+FUNC_VEC(module_t)
 
 int extract_function_entry(msl_interface_impl_t* msl_interface, size_t index, const char** function_name, TRoutine* function_routine, int32_t* argument_count)
 {
@@ -229,7 +231,7 @@ int call_builtin_ex(msl_interface_impl_t* msl_interface, rvalue_t* result, const
 	// Use the cached result if possible
 	TRoutine function = NULL;
 	int last_status = MSL_SUCCESS;
-	last_status = GET_VALUE_N(str, TRoutine)(&msl_interface->builtin_function_cache, function_name, &function);
+	last_status = GET_VALUE(str, TRoutine)(&msl_interface->builtin_function_cache, function_name, &function);
 	if (last_status == MSL_SUCCESS)
 	{
 		function(
@@ -253,7 +255,7 @@ int call_builtin_ex(msl_interface_impl_t* msl_interface, rvalue_t* result, const
 	RUNTIME_ASSERT(function != NULL);
 
 	// Cache the result
-	last_status = INSERT_N(str, TRoutine)(&msl_interface->builtin_function_cache, function_name, function);
+	last_status = INSERT(str, TRoutine)(&msl_interface->builtin_function_cache, function_name, function);
 	if (last_status) return last_status;
 	
 	function(
