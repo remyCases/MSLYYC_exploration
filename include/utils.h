@@ -13,32 +13,32 @@
 
 typedef uint32_t hash_t;
 
-#define HASHMAP_ELMT_TYPE(K, V) SS_CAT_UND(hmel, K, V, t)
-#define HASHMAP_ELMT(K, V)                      \
+#define HASHMAP_ELMT(K, V) SS_CAT_UND(hmel, K, V, t)
+#define _HASHMAP_ELMT(K, V)                      \
 typedef struct SS_CAT_UND(hmel, K, V, s) {      \
     V value;                                    \
     K key;                                      \
     hash_t hash;                                \
-} HASHMAP_ELMT_TYPE(K, V);
+} HASHMAP_ELMT(K, V);
 
-#define HASHMAP_TYPE(K, V) SS_CAT_UND(hm, K, V, t)
-#define HASHMAP(K, V)                           \
+#define HASHMAP(K, V) SS_CAT_UND(hm, K, V, t)
+#define _HASHMAP(K, V)                           \
 typedef struct SS_CAT_UND(hm, K, V, s) {        \
     int32_t current_size;                       \
     int32_t used_count;                         \
     int32_t current_mask;                       \
     int32_t grow_threshold;                     \
-    HASHMAP_ELMT_TYPE(K, V)* elements;          \
+    HASHMAP_ELMT(K, V)* elements;               \
 	void(*delete_value)(K* key, V* value);      \
-} HASHMAP_TYPE(K, V);
+} HASHMAP(K, V);
 
 #define GET_CONTAINER(K, V) S_CAT_UND(get_container, K, V)
 #define _GET_CONTAINER(K, V)                                                                        \
-int GET_CONTAINER(K, V)(HASHMAP_TYPE(K, V)* hashmap, K key, HASHMAP_ELMT_TYPE(K, V)* value)         \
+int GET_CONTAINER(K, V)(HASHMAP(K, V)* hashmap, K key, HASHMAP_ELMT(K, V)* value)                   \
 {                                                                                                   \
     hash_t value_hash = HASH_KEY(K)(key);                                                           \
     int32_t ideal_position = (int)(value_hash & hashmap->current_mask);                             \
-    for (HASHMAP_ELMT_TYPE(K, V) current_element = hashmap->elements[ideal_position];               \
+    for (HASHMAP_ELMT(K, V) current_element = hashmap->elements[ideal_position];                    \
         current_element.hash != 0;                                                                  \
         current_element = hashmap->elements[(++ideal_position) & hashmap->current_mask]) {          \
         if (current_element.key != key) continue;                                                   \
@@ -50,9 +50,9 @@ int GET_CONTAINER(K, V)(HASHMAP_TYPE(K, V)* hashmap, K key, HASHMAP_ELMT_TYPE(K,
 
 #define GET_VALUE(K, V) S_CAT_UND(get_value, K, V)
 #define _GET_VALUE(K, V)                                                                    \
-int GET_VALUE(K, V)(HASHMAP_TYPE(K, V)* hashmap, K key, V* value)                           \
+int GET_VALUE(K, V)(HASHMAP(K, V)* hashmap, K key, V* value)                                \
 {                                                                                           \
-    HASHMAP_ELMT_TYPE(K, V)* object_container = NULL;                                       \
+    HASHMAP_ELMT(K, V)* object_container = NULL;                                            \
     if (GET_CONTAINER(K, V)(hashmap, key, object_container) == MSL_OBJECT_NOT_IN_LIST)      \
         return MSL_OBJECT_NOT_IN_LIST;                                                      \
     *value = object_container->value;                                                       \
@@ -61,7 +61,7 @@ int GET_VALUE(K, V)(HASHMAP_TYPE(K, V)* hashmap, K key, V* value)               
 
 #define INSERT(K, V) S_CAT_UND(insert, K, V)
 #define _INSERT(K, V)                                                                                           \
-int INSERT(K, V)(HASHMAP_TYPE(K, V)* hashmap, K key, V value)                                                   \
+int INSERT(K, V)(HASHMAP(K, V)* hashmap, K key, V value)                                                        \
 {                                                                                                               \
     /* Check if we need to grow the hashmap */                                                                  \
     if (hashmap->used_count >= hashmap->grow_threshold) {                                                       \
@@ -98,13 +98,13 @@ int INSERT(K, V)(HASHMAP_TYPE(K, V)* hashmap, K key, V value)                   
 
 #define GROW(K, V) S_CAT_UND(grow, K, V)
 #define _GROW(K, V)                                                                             \
-int GROW(K, V)(HASHMAP_TYPE(K, V)* hashmap)                                                     \
+int GROW(K, V)(HASHMAP(K, V)* hashmap)                                                          \
 {                                                                                               \
     int32_t new_size = hashmap->current_size * 2;                                               \
-    HASHMAP_ELMT_TYPE(K, V)* new_elements = calloc(new_size, sizeof(HASHMAP_ELMT_TYPE(K, V)));  \
+    HASHMAP_ELMT(K, V)* new_elements = calloc(new_size, sizeof(HASHMAP_ELMT(K, V)));            \
     if (!new_elements) return MSL_INSUFFICIENT_MEMORY;                                          \
     /* Save old values */                                                                       \
-    HASHMAP_ELMT_TYPE(K, V)* old_elements = hashmap->elements;                                  \
+    HASHMAP_ELMT(K, V)* old_elements = hashmap->elements;                                       \
     int32_t old_size = hashmap->current_size;                                                   \
     /* Update hashmap with new array */                                                         \
     hashmap->elements = new_elements;                                                           \
@@ -122,9 +122,9 @@ int GROW(K, V)(HASHMAP_TYPE(K, V)* hashmap)                                     
     return MSL_SUCCESS;                                                                         \
 }
 
-#define HASH(K, V)      \
-    HASHMAP_ELMT(K, V)  \
-    HASHMAP(K, V)       \
+#define DEF_HASHMAP(K, V)   \
+    _HASHMAP_ELMT(K, V)     \
+    _HASHMAP(K, V)          \
 
 #define FUNC_HASH(K, V) \
     _GET_CONTAINER(K, V) \
@@ -132,42 +132,54 @@ int GROW(K, V)(HASHMAP_TYPE(K, V)* hashmap)                                     
     _INSERT(K, V)        \
     _GROW(K, V)   
 
-#define LINKEDLIST_TYPE(T) S_CAT_UND(ll, T, t)
-#define LINKEDLIST(T)                   \
+#define LINKEDLIST(T) S_CAT_UND(ll, T, t)
+#define _LINKEDLIST(T)                  \
 typedef struct S_CAT_UND(ll, T, s) {    \
     T* first;                           \
     T* last;                            \
     int32_t count;                      \
     int32_t delete_type;                \
-} LINKEDLIST_TYPE(T);
+} LINKEDLIST(T);
 
-#define OLINKEDLIST_TYPE(T) S_CAT_UND(oll, T, t)
-#define OLINKEDLIST(T)                  \
+#define DEF_LINKEDLIST(T)   \
+    _LINKEDLIST(T)   
+
+#define OLINKEDLIST(T) S_CAT_UND(oll, T, t)
+#define _OLINKEDLIST(T)                 \
 typedef struct S_CAT_UND(oll, T, s) {   \
     T* first;                           \
     T* last;                            \
     int32_t count;                      \
-} OLINKEDLIST_TYPE(T);
+} OLINKEDLIST(T);
 
-#define ARRAY_STRUCTURE_TYPE(T) S_CAT_UND(as, T, t)
-#define ARRAY_STRUCTURE(T)               \
+#define DEF_OLINKEDLIST(T)   \
+    _OLINKEDLIST(T)   
+
+#define ARRAY_STRUCTURE(T) S_CAT_UND(as, T, t)
+#define _ARRAY_STRUCTURE(T)              \
 typedef struct S_CAT_UND(as, T, s) {     \
     int32_t length;                      \
     T* array;                            \
-} ARRAY_STRUCTURE_TYPE(T);
+} ARRAY_STRUCTURE(T);
 
-#define VECTOR_TYPE(T) S_CAT_UND(v, T, t)
-#define VECTOR(T)                       \
+#define DEF_ARRAY_STRUCTURE(T)   \
+    _ARRAY_STRUCTURE(T)   
+
+#define VECTOR(T) S_CAT_UND(v, T, t)
+#define _VECTOR(T)                      \
 typedef struct S_CAT_UND(v, T, s) {     \
     size_t size;                        \
     size_t capacity;                    \
     T* arr;                             \
-} VECTOR_TYPE(T);
+} VECTOR(T);
+
+#define DEF_VECTOR(T)   \
+    _VECTOR(T) 
 
 #define DEFAULT_CAPACITY 2
 #define INIT_VECTOR(T) S_CAT_UND(init, vec, T)
 #define _INIT_VECTOR(T)                             \
-int INIT_VECTOR(T)(VECTOR_TYPE(T)* vec) {           \
+int INIT_VECTOR(T)(VECTOR(T)* vec) {                \
 	vec->size = 0;                                  \
 	vec->capacity = DEFAULT_CAPACITY;               \
 	vec->arr = (T*)malloc(sizeof(T)*vec->capacity); \
@@ -177,14 +189,14 @@ int INIT_VECTOR(T)(VECTOR_TYPE(T)* vec) {           \
 
 #define FREE_VECTOR(T) S_CAT_UND(free, vec, T)
 #define _FREE_VECTOR(T)                     \
-int FREE_VECTOR(T)(VECTOR_TYPE(T)* vec) {   \
+int FREE_VECTOR(T)(VECTOR(T)* vec) {        \
 	free(vec->arr);                         \
 	return MSL_SUCCESS;                     \
 }
 
 #define RESIZE_VECTOR(T) S_CAT_UND(resize, vec, T)
 #define _RESIZE_VECTOR(T)                                       \
-int RESIZE_VECTOR(T)(VECTOR_TYPE(T)* vec) {                     \
+int RESIZE_VECTOR(T)(VECTOR(T)* vec) {                          \
 	vec->capacity += DEFAULT_CAPACITY;                          \
     vec->arr = (T*)realloc(vec->arr, sizeof(T)*vec->capacity);  \
     if (!vec->arr) return MSL_ALLOCATION_ERROR;                 \
@@ -193,7 +205,7 @@ int RESIZE_VECTOR(T)(VECTOR_TYPE(T)* vec) {                     \
 
 #define ADD_VECTOR(T) S_CAT_UND(add, vec, T)
 #define _ADD_VECTOR(T)                              \
-int ADD_VECTOR(T)(VECTOR_TYPE(T)* vec, T* elmt) {   \
+int ADD_VECTOR(T)(VECTOR(T)* vec, T* elmt) {        \
 	int status = MSL_SUCCESS;                       \
 	if (vec->size >= vec->capacity) {               \
 		status = RESIZE_VECTOR(T)(vec);             \

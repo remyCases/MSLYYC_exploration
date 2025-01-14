@@ -36,10 +36,10 @@ typedef int(*Entry)(module_t*,const char*);
 typedef int(*LoaderEntry)(module_t*, void*(*pp_get_framework_routine)(const char*), Entry, const char*, module_t*);	
 typedef void(*ModuleCallback)(module_t*, MODULE_OPERATION_TYPE, operation_info_t*);
 
-HASH(str, TRoutine)
-HASH(str, size_t)
-VECTOR(module_callback_descriptor_t)
-VECTOR(module_t)
+DEF_HASHMAP(str, TRoutine)
+DEF_HASHMAP(str, size_t)
+DEF_VECTOR(module_callback_descriptor_t)
+DEF_VECTOR(module_t)
 
 enum EVENT_TRIGGERS
 {
@@ -227,11 +227,11 @@ struct msl_interface_impl_s
 
     // Cache used for lookups of builtin functions (room_goto, etc.)
     // key = name, value = function pointer
-    HASHMAP_TYPE(str, TRoutine) builtin_function_cache;
+    HASHMAP(str, TRoutine) builtin_function_cache;
 
     // Cache used for lookups of builtin variables (xprevious, etc.)
     // key = name, value = index in the m_BuiltinArray
-    HASHMAP_TYPE(str, size_t) builtin_variable_cache;
+    HASHMAP(str, size_t) builtin_variable_cache;
 
     // D3D11 stuff
     IDXGISwapChain* engine_swapchain;
@@ -261,7 +261,7 @@ struct msl_interface_impl_s
     PFN_FindAllocSlot find_alloc_slot;
 
     // Stores plugin callbacks
-    VECTOR_TYPE(module_callback_descriptor_t) registered_callbacks;
+    VECTOR(module_callback_descriptor_t) registered_callbacks;
 
     // === Internal functions ===
     int(*extract_function_entry)(msl_interface_impl_t*, size_t, char**, TRoutine*, int32_t*);
@@ -363,7 +363,7 @@ typedef struct module_s
     ModuleCallback module_operation_callback;
 };
 
-extern VECTOR_TYPE(module_t) global_module_list;
+extern VECTOR(module_t) global_module_list;
 
 rvalue_t init_rvalue(void);
 rvalue_t init_rvalue_bool(bool);

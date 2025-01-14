@@ -66,30 +66,30 @@ typedef event_t* p_event_t;
 typedef layer_t* p_layer_t;
 typedef layer_element_base_t* p_layer_element_base_t;
 typedef layer_instance_element_t* p_layer_instance_element_t;
-HASH(int32_t, p_rvalue_t)
-HASH(int, p_object_gm_t)
-HASH(int, p_event_t)
-HASH(int32_t, p_layer_t)
-HASH(int32_t, p_layer_element_base_t)
-HASH(int32_t, p_layer_instance_element_t)
+DEF_HASHMAP(int32_t, p_rvalue_t)
+DEF_HASHMAP(int, p_object_gm_t)
+DEF_HASHMAP(int, p_event_t)
+DEF_HASHMAP(int32_t, p_layer_t)
+DEF_HASHMAP(int32_t, p_layer_element_base_t)
+DEF_HASHMAP(int32_t, p_layer_instance_element_t)
 
-LINKEDLIST(instance_t)
-LINKEDLIST(layer_element_base_t)
-LINKEDLIST(layer_t)
+DEF_LINKEDLIST(instance_t)
+DEF_LINKEDLIST(layer_element_base_t)
+DEF_LINKEDLIST(layer_t)
 #ifdef _WIN64
-	COMPILE_TIME_ASSERT(sizeof(LINKEDLIST_TYPE(instance_t)) == 0x18);
+	COMPILE_TIME_ASSERT(sizeof(LINKEDLIST(instance_t)) == 0x18);
 #endif // _WIN64
 
-OLINKEDLIST(instance_t)
+DEF_OLINKEDLIST(instance_t)
 #ifdef _WIN64
-	COMPILE_TIME_ASSERT(sizeof(OLINKEDLIST_TYPE(instance_t)) == 0x18);
-	COMPILE_TIME_ASSERT(sizeof(OLINKEDLIST_TYPE(instance_t)) == sizeof(LINKEDLIST_TYPE(instance_t)));
+	COMPILE_TIME_ASSERT(sizeof(OLINKEDLIST(instance_t)) == 0x18);
+	COMPILE_TIME_ASSERT(sizeof(OLINKEDLIST(instance_t)) == sizeof(LINKEDLIST(instance_t)));
 #endif // _WIN64
 
-ARRAY_STRUCTURE(int)
-ARRAY_STRUCTURE(rtile_t)
+DEF_ARRAY_STRUCTURE(int)
+DEF_ARRAY_STRUCTURE(rtile_t)
 #ifdef _WIN64
-	COMPILE_TIME_ASSERT(sizeof(ARRAY_STRUCTURE_TYPE(int)) == 0x10);
+	COMPILE_TIME_ASSERT(sizeof(ARRAY_STRUCTURE(int)) == 0x10);
 #endif // _WIN64
 
 enum EJSRetValBool
@@ -374,7 +374,7 @@ struct layer_s
     rvalue_t effect;
     layer_effect_info_t* initial_effect_info;
     int32_t shader_id;
-    LINKEDLIST_TYPE(layer_element_base_t) elements;
+    LINKEDLIST(layer_element_base_t) elements;
     layer_t* flink;
     layer_t* blink;
     void* gc_proxy;
@@ -396,8 +396,8 @@ struct room_internal_s
     int32_t physics_gravity_x;
     int32_t physics_gravity_y;
     float physics_pixel_to_meters;
-    OLINKEDLIST_TYPE(instance_t) active_instances;
-    LINKEDLIST_TYPE(instance_t) inactive_instances;
+    OLINKEDLIST(instance_t) active_instances;
+    LINKEDLIST(instance_t) inactive_instances;
     instance_t* marked_first;
     instance_t* marked_last;
     int32_t* creation_order_list;
@@ -406,16 +406,16 @@ struct room_internal_s
     void* wad_base_address;
     physics_world_t* physics_world;
     int32_t tile_count;
-    ARRAY_STRUCTURE_TYPE(rtile_t) tiles;
+    ARRAY_STRUCTURE(rtile_t) tiles;
     yyroom_tiles_t* wad_tiles;
     yyroom_instances_t* wad_instances;
     const char* name;
     bool is_duplicate;
-    LINKEDLIST_TYPE(layer_t) layers;
-    HASHMAP_TYPE(int32_t, p_layer_t) layer_lookup;
-    HASHMAP_TYPE(int32_t, p_layer_element_base_t) layer_element_lookup;
+    LINKEDLIST(layer_t) layers;
+    HASHMAP(int32_t, p_layer_t) layer_lookup;
+    HASHMAP(int32_t, p_layer_element_base_t) layer_element_lookup;
     layer_element_base_t* last_element_looked_up;
-    HASHMAP_TYPE(int32_t, p_layer_instance_element_t) instance_element_lookup;
+    HASHMAP(int32_t, p_layer_instance_element_t) instance_element_lookup;
     int32_t* sequence_instance_ids;
     int32_t sequence_instance_id_count;
     int32_t sequence_instance_id_max;
@@ -500,7 +500,7 @@ struct yyobject_base_s
     FNGetOwnProperty get_own_property;
     FNDeleteProperty delete_property;
     FNDefineOwnProperty define_own_property;
-    HASHMAP_TYPE(int32_t, p_rvalue_t)* yyvars_map;
+    HASHMAP(int32_t, p_rvalue_t)* yyvars_map;
     weak_ref_t** weak_ref;
     uint32_t weak_ref_count;
     uint32_t variable_count;
@@ -523,11 +523,11 @@ struct object_gm_s
 {
     const char* name;
     object_gm_t* parent_object;
-    HASHMAP_TYPE(int, p_object_gm_t)* children_map;
-    HASHMAP_TYPE(int, p_event_t)* events_map;
+    HASHMAP(int, p_object_gm_t)* children_map;
+    HASHMAP(int, p_event_t)* events_map;
     physics_data_gm_t physics_data;
-    LINKEDLIST_TYPE(instance_t) instances;
-    LINKEDLIST_TYPE(instance_t) instances_recursive;
+    LINKEDLIST(instance_t) instances;
+    LINKEDLIST(instance_t) instances_recursive;
     uint32_t flags;
     int32_t sprite_index;
     int32_t depth;
