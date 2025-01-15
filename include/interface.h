@@ -17,24 +17,26 @@
 
 typedef const char* str;
 
+typedef enum OBJECT_TYPE OBJECT_TYPE;
 typedef enum EVENT_TRIGGERS EVENT_TRIGGERS;
 typedef enum CM_COLOR CM_COLOR;
 typedef enum MODULE_OPERATION_TYPE MODULE_OPERATION_TYPE;
 
 typedef struct module_callback_descriptor_s module_callback_descriptor_t;
 typedef struct operation_info_s operation_info_t;
-typedef struct msl_inline_hook_s msl_inline_hook_t;
-typedef struct msl_mid_hook_s msl_mid_hook_t;
-typedef struct msl_memory_allocation_s msl_memory_allocation_t;
+typedef struct inline_hook_t_s inline_hook_t_t;
+typedef struct mid_hook_s mid_hook_t;
+typedef struct memory_allocation_s memory_allocation_t;
 typedef struct module_s module_t;
-typedef struct msl_interface_base_s msl_interface_base_t;
-typedef struct msl_interface_s msl_interface_t;
-typedef struct msl_interface_impl_s msl_interface_impl_t;
-typedef struct msl_interface_table_entry_s msl_interface_table_entry_t;
+typedef struct interface_base_s interface_base_t;
+typedef struct interface_s interface_t;
+typedef struct interface_impl_s interface_impl_t;
+typedef struct base_object_s base_object_t;
+typedef struct interface_table_entry_s interface_table_entry_t;
 
 typedef int(*Entry)(module_t*,const char*);
 typedef int(*LoaderEntry)(module_t*, void*(*pp_get_framework_routine)(const char*), Entry, const char*, module_t*);	
-typedef void(*ModuleCallback)(module_t*, MODULE_OPERATION_TYPE, operation_info_t*);
+typedef int(*ModuleCallback)(module_t*, MODULE_OPERATION_TYPE, operation_info_t*);
 
 DEF_HASHMAP(str, TRoutine)
 DEF_FUNC_HASH(str, TRoutine)
@@ -44,8 +46,22 @@ DEF_VECTOR(module_callback_descriptor_t)
 DEF_FUNC_VEC(module_callback_descriptor_t) 
 DEF_VECTOR(module_t)
 DEF_FUNC_VEC(module_t) 
-DEF_VECTOR(msl_interface_table_entry_t)
-DEF_FUNC_VEC(msl_interface_table_entry_t) 
+DEF_VECTOR(interface_table_entry_t)
+DEF_FUNC_VEC(interface_table_entry_t) 
+
+enum OBJECT_TYPE
+{
+    // An AurieModule object
+    OBJECT_MODULE = 1,
+    // An AurieInterfaceBase object
+    OBJECT_INTERFACE = 2,
+    // An AurieMemoryAllocation object
+    OBJECT_ALLOCATION = 3,
+    // An AurieHook object
+    OBJECT_HOOK = 4,
+    // An AurieHook object
+    OBJECT_MIDFUNCTION_HOOK = 5,
+};
 
 enum EVENT_TRIGGERS
 {
@@ -110,28 +126,31 @@ struct operation_info_s
     void* module_base_address;
 };
 
-struct msl_inline_hook_s
+struct inline_hook_t_s
 {
+    int(*get_object_type)(void);
     module_t* owner;
     const char* identifier;
     safety_hook_inline_t hook_instance;
 };
 
-struct msl_mid_hook_s
+struct mid_hook_s
 {
+    int(*get_object_type)(void);
     module_t* owner;
     const char* identifier;
     safety_hook_mid_t hook_instance;
 };
 
-struct msl_memory_allocation_s
+struct memory_allocation_s
 {
+    int(*get_object_type)(void);
     void* allocation_base;
     size_t allocation_size;
     module_t* owner_module;
 };
 
-struct msl_interface_base_s
+struct interface_base_s
 {
     // Interface "constructor"
     int(*create)();
@@ -141,7 +160,7 @@ struct msl_interface_base_s
     int(*query_version)(short* major, short* minor, short* patch);
 };
 
-struct msl_interface_s
+struct interface_s
 {
     // Interface "constructor"
     int(*create)();
@@ -154,7 +173,7 @@ struct msl_interface_s
     int(*get_named_routine_pointer)(const char* function_name, void** function_pointer);
     int(*get_global_instance)(instance_t** instance);
     int(*call_builtin)(const char* function_name, rvalue_t* args, size_t arg_size, rvalue_t* out);
-    int(*call_builtin_ex)(msl_interface_impl_t*, rvalue_t*, const char*, instance_t*, instance_t*, rvalue_t*, size_t);
+    int(*call_builtin_ex)(interface_impl_t*, rvalue_t*, const char*, instance_t*, instance_t*, rvalue_t*, size_t);
     
     void(*print_warning)(const char*);
 
@@ -184,9 +203,9 @@ struct msl_interface_s
     int(*get_variable_slot)(const rvalue_t* object, const char* variable_name, int32_t* hash);
 };
 
-struct msl_interface_impl_s
+struct interface_impl_s
 {
-    msl_interface_t intf;
+    interface_t intf;
 
     // Dictates whether the first stage of initializing completed already.
     bool first_init_complete;
@@ -270,14 +289,14 @@ struct msl_interface_impl_s
     VECTOR(module_callback_descriptor_t) registered_callbacks;
 
     // === Internal functions ===
-    int(*extract_function_entry)(msl_interface_impl_t*, size_t, char**, TRoutine*, int32_t*);
+    int(*extract_function_entry)(interface_impl_t*, size_t, char**, TRoutine*, int32_t*);
     int(*descriptor_comparator)(const void*, const void*);
-    int(*sort_module_callbacks)(msl_interface_impl_t*);
+    int(*sort_module_callbacks)(interface_impl_t*);
     int(*create_callback_descriptor)(module_t*, EVENT_TRIGGERS, void*, int32_t, module_callback_descriptor_t*);
-    int(*add_to_callback_list)(msl_interface_impl_t*, module_callback_descriptor_t*);
+    int(*add_to_callback_list)(interface_impl_t*, module_callback_descriptor_t*);
     int(*find_descriptor)(module_callback_descriptor_t*, module_callback_descriptor_t*);
-    int(*remove_callback_from_list)(msl_interface_impl_t*, module_t*, void*);
-    int(*callback_exists)(msl_interface_impl_t*, module_t*, void*);
+    int(*remove_callback_from_list)(interface_impl_t*, module_t*, void*);
+    int(*callback_exists)(interface_impl_t*, module_t*, void*);
 
     // TODO: DISPATCH_CALLBACKS
 
@@ -285,16 +304,23 @@ struct msl_interface_impl_s
     int (*determine_function_entry_size)(size_t*);
 };
 
-extern msl_interface_impl_t global_module_interface;
+extern interface_impl_t global_module_interface;
 
-struct msl_interface_table_entry_s
+struct base_object_s
 {
+    int(*get_object_type)(void);
+};
+
+struct interface_table_entry_s
+{
+    int(*get_object_type)(void);
     module_t* owner_module;
     const char* interface_name;
-    msl_interface_base_t* intf;
+    interface_base_t* intf;
 };
 struct module_s 
 {
+    int(*get_object_type)(void);
     union
     {
         uint8_t bitfield;
@@ -355,17 +381,17 @@ struct module_s
     LoaderEntry framework_initialize;
 
     // Interfaces exposed by the module
-    VECTOR(msl_interface_table_entry_t) interface_table;
+    VECTOR(interface_table_entry_t) interface_table;
 
     // Memory allocated by the module
     // 
     // If the allocation is made in the global context (i.e. by MmAllocatePersistentMemory)
     // the allocation is put into g_ArInitialImage of the framework module.
-    msl_memory_allocation_t* memory_allocations;
+    memory_allocation_t* memory_allocations;
 
     // Functions hooked by the module by Mm*Hook functions
-    msl_inline_hook_t* inline_hooks;
-    msl_mid_hook_t* mid_hooks;
+    inline_hook_t_t* inline_hooks;
+    mid_hook_t* mid_hooks;
 
     // If set, notifies the plugin of any module actions
     ModuleCallback module_operation_callback;
@@ -380,5 +406,5 @@ rvalue_t init_rvalue_i64(int64_t);
 rvalue_t init_rvalue_i32(int32_t);
 rvalue_t init_rvalue_instance(instance_t*);
 rvalue_t init_rvalue_str(const char*);
-int init_rvalue_str_interface(rvalue_t*, const char*, msl_interface_impl_t*);
+int init_rvalue_str_interface(rvalue_t*, const char*, interface_impl_t*);
 #endif  /* !INTERFACE_H_ */

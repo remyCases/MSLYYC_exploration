@@ -8,6 +8,8 @@
 #include "error.h"
 #include "interface.h"
 
-int ob_get_interface(const char* interface_name, msl_interface_base_t** msl_interface);
-
+int ob_create_interface(module_t*, interface_base_t*, const char*);
+int ob_interface_exists(const char*);
+int ob_get_interface(const char*, interface_base_t**);
+int ob_destroy_interface(module_t*, const char*);
 #endif  /* !OBJECT_H_ */

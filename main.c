@@ -15,7 +15,7 @@
 #include "include/object.h"
 #include <winnt.h>
 
-static msl_interface_t* global_msl_interface = NULL;
+static interface_t* global_interface = NULL;
 
 void save_game(FWCodeEvent* code_event)
 {
@@ -31,17 +31,17 @@ void save_game(FWCodeEvent* code_event)
         rvalue_t arg_message = init_rvalue_str("You Save Game (Can I play, Daddy?)");
 
         rvalue_t args[2] = { arg_smoothSaveAuto };
-        last_status = global_msl_interface->call_builtin("asset_get_index", args, 1, &scr_smoothSaveAuto);
+        last_status = global_interface->call_builtin("asset_get_index", args, 1, &scr_smoothSaveAuto);
 
         args[0] = scr_smoothSaveAuto;
-        last_status = global_msl_interface->call_builtin("script_execute", args, 1, NULL);
+        last_status = global_interface->call_builtin("script_execute", args, 1, NULL);
 
         args[0] = arg_actionsLogUpdate;
-        last_status = global_msl_interface->call_builtin("asset_get_index", args, 1, &scr_actionsLogUpdate);
+        last_status = global_interface->call_builtin("asset_get_index", args, 1, &scr_actionsLogUpdate);
 
         args[0] = scr_actionsLogUpdate;
         args[1] = arg_message;
-        last_status = global_msl_interface->call_builtin("script_execute", args, 2, NULL);
+        last_status = global_interface->call_builtin("script_execute", args, 2, NULL);
     }
 
     code_event->Call();
@@ -51,11 +51,11 @@ int module_initialize(module_t* module, const char* module_path)
 {
     UNREFERENCED_PARAMETER(module_path);
 
-    int last_status = LOG_ON_ERR(ob_get_interface, "YYTK_Main", (msl_interface_base_t**)(&global_msl_interface));
+    int last_status = LOG_ON_ERR(ob_get_interface, "YYTK_Main", (interface_base_t**)(&global_interface));
     if (last_status) return MSL_MODULE_DEPENDENCY_NOT_RESOLVED;
 
-    global_msl_interface->print_warning("Hello Mod");
-    global_msl_interface->create_callback(module, EVENT_OBJECT_CALL, save_game, 0);
+    global_interface->print_warning("Hello Mod");
+    global_interface->create_callback(module, EVENT_OBJECT_CALL, save_game, 0);
 
     return MSL_SUCCESS;
 }
