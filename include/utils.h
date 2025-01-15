@@ -9,12 +9,30 @@
 #include <string.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <Windows.h>
 #include "utils_macro.h"
+
+typedef struct directory_iterator_s directory_iterator_t;
+typedef struct directory_stack_node_s directory_stack_node_t;
+
+struct directory_stack_node_s {
+    HANDLE find_handle;
+    char* path;
+    directory_stack_node_t* next;
+};
+
+struct directory_iterator_s {
+    HANDLE find_handle;
+    WIN32_FIND_DATA find_data;
+    char* current_path;
+    char* pattern;
+    directory_stack_node_t* stack;  // For managing directory hierarchy
+};
 
 typedef uint32_t hash_t;
 
 #define HASHMAP_ELMT(K, V) SS_CAT_UND(hmel, K, V, t)
-#define _HASHMAP_ELMT(K, V)                      \
+#define _HASHMAP_ELMT(K, V)                     \
 typedef struct SS_CAT_UND(hmel, K, V, s) {      \
     V value;                                    \
     K key;                                      \
@@ -22,7 +40,7 @@ typedef struct SS_CAT_UND(hmel, K, V, s) {      \
 } HASHMAP_ELMT(K, V);
 
 #define HASHMAP(K, V) SS_CAT_UND(hm, K, V, t)
-#define _HASHMAP(K, V)                           \
+#define _HASHMAP(K, V)                          \
 typedef struct SS_CAT_UND(hm, K, V, s) {        \
     int32_t current_size;                       \
     int32_t used_count;                         \
@@ -239,7 +257,13 @@ int ADD_VECTOR(T)(VECTOR(T)* vec, T* elmt) {        \
 #define HASH_KEY_int hash_key_int
 #define HASH_KEY_int32_t hash_key_int
 
-hash_t hash_key_int(int key);
-hash_t hash_key_ptr(void* key);
-hash_t hash_key_str(const char* key);
+int iterator_create(const char*, const char*, directory_iterator_t**);
+int iterator_next(directory_iterator_t*);
+int iterator_enter_directory(directory_iterator_t*);
+int iterator_destroy(directory_iterator_t*);
+int has_parent_path(const char*);
+int parent_path(const char*, char**);
+hash_t hash_key_int(int);
+hash_t hash_key_ptr(void*);
+hash_t hash_key_str(const char*);
 #endif  /* !UTILS_H_ */

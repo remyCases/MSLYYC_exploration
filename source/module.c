@@ -3,6 +3,8 @@
 // This file is part of MSLYYC_exploration project from https://github.com/remyCases/MSLYYC_exploration.
 
 #include "../include/module.h"
+#include "../include/error.h"
+#include "Psapi.h"
 
 #ifdef WIN32
 #include <io.h>
@@ -23,11 +25,11 @@ int mdp_create_module(const char* image_path, HMODULE image_module, bool process
 
     if (process_exports)
     {
-        last_status = LOG_ERR(mdp_process_image_exports, image_path, image_module, &temp_module);
+        last_status = LOG_ON_ERR(mdp_process_image_exports, image_path, image_module, &temp_module);
         if (last_status) return last_status;
     }
 
-    last_status = LOG_ERR(mdp_query_module_information, image_module, &temp_module.image_base.pointer, &temp_module.image_size, &temp_module.image_entrypoint.pointer);
+    last_status = LOG_ON_ERR(mdp_query_module_information, image_module, &temp_module.image_base.pointer, &temp_module.image_size, &temp_module.image_entrypoint.pointer);
     if (last_status) return last_status;
 
     *module = temp_module;
@@ -58,13 +60,13 @@ int mdp_purge_marked_modules(void)
     for(size_t i = 0; i < global_module_list.size; i++)
     {
         module = &global_module_list.arr[i];
-        last_status = LOG_ERR(mdp_is_module_marked_for_purge, module, &purge_flag);
+        last_status = LOG_ON_ERR(mdp_is_module_marked_for_purge, module, &purge_flag);
         if (last_status) return last_status;
 
         if (purge_flag)
         {
             // Unmap the module, but don't call the unload routine, and don't remove it from the list
-            last_status = LOG_ERR(mdp_unmap_image, &module, false, false);
+            last_status = LOG_ON_ERR(mdp_unmap_image, &module, false, false);
             if (last_status) return last_status;
         }
     }
@@ -75,7 +77,7 @@ int mdp_purge_marked_modules(void)
     for(size_t i = 0; i < global_module_list.size; i++)
     {
         module = &global_module_list.arr[i];
-        last_status = LOG_ERR(mdp_is_module_marked_for_purge, module, &purge_flag);
+        last_status = LOG_ON_ERR(mdp_is_module_marked_for_purge, module, &purge_flag);
         if (last_status) return last_status;
 
         if (purge_flag)
@@ -89,7 +91,7 @@ int mdp_purge_marked_modules(void)
     return last_status;
 }
 
-int mdp_map_image(const char* image_path, HMODULE** image_base)
+int mdp_map_image(const char* image_path, HMODULE* image_base)
 {
     // If the file doesn't exist, we have nothing to map
     if (access(image_path, F_OK)) return MSL_FILE_NOT_FOUND;
@@ -99,11 +101,11 @@ int mdp_map_image(const char* image_path, HMODULE** image_base)
     unsigned short self_arch = 0;
     
     // Query the target image architecture
-    last_status = LOG_ERR(pp_query_image_architecture, image_path, target_arch);
+    last_status = LOG_ON_ERR(pp_query_image_architecture, image_path, target_arch);
     if (last_status) return last_status;
 
     // Query the current architecture
-    last_status = LOG_ERR(pp_get_current_architecture, self_arch);
+    last_status = LOG_ON_ERR(pp_get_current_architecture, self_arch);
     if (last_status) return last_status;
 
     // Don't try to load modules which are the wrong architecture
@@ -114,11 +116,11 @@ int mdp_map_image(const char* image_path, HMODULE** image_base)
     int module_entry;
     int module_preinit;
 
-    last_status = LOG_ERR(pp_find_file_export_by_name, image_path, "__AurieFrameworkInit", &framework_init);
+    last_status = LOG_ON_ERR(pp_find_file_export_by_name, image_path, "__AurieFrameworkInit", &framework_init);
     if (last_status) return last_status;
-    last_status = LOG_ERR(pp_find_file_export_by_name, image_path, "ModuleInitialize", &module_entry);
+    last_status = LOG_ON_ERR(pp_find_file_export_by_name, image_path, "ModuleInitialize", &module_entry);
     if (last_status) return last_status;
-    last_status = LOG_ERR(pp_find_file_export_by_name, image_path, "ModulePreinitialize", &module_preinit);
+    last_status = LOG_ON_ERR(pp_find_file_export_by_name, image_path, "ModulePreinitialize", &module_preinit);
     if (last_status) return last_status;
 
     // If the image doesn't have a framework init function, we can't load it.
@@ -135,11 +137,96 @@ int mdp_map_image(const char* image_path, HMODULE** image_base)
     if (last_status == MSL_SUCCESS) return MSL_OBJECT_ALREADY_EXISTS;
 
     // Load the image into memory and make sure we loaded it
-    HMODULE image_module = LoadLibraryW(image_path);
+    HMODULE image_module = LoadLibraryW((LPCWSTR)image_path);
     if (!image_module) return MSL_EXTERNAL_ERROR;
 
     *image_base = image_module;
     return MSL_SUCCESS;
+}
+
+int mdp_build_module_list(const char* base_folder, bool recursive, bool(*predicate)(const char*), VECTOR(char)* files)
+{
+    int last_status = MSL_SUCCESS;
+    files->size= 0;
+    char tmp_path[MAX_PATH];
+    tmp_path[0] = 0;
+
+    directory_iterator_t* iter = NULL;
+    last_status = LOG_ON_ERR(iterator_create, base_folder, "*", &iter);
+    if (last_status) return last_status;
+
+    do
+    {
+        strcpy(tmp_path, iter->current_path);
+        tmp_path[MAX_PATH-1] = 0;
+        strcat(tmp_path, iter->find_data.cFileName);
+        tmp_path[MAX_PATH-1] = 0;
+        if (predicate(tmp_path))
+        {
+            last_status = LOG_ON_ERR(ADD_VECTOR(char), files, tmp_path);
+            if (last_status) return last_status;
+        }
+
+        if (iter->find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) 
+        {
+            if (iterator_enter_directory(iter)) 
+            {
+                continue;  // Successfully entered directory
+            }
+        }
+    } while (iterator_next(iter));
+
+    last_status = LOG_ON_ERR(iterator_destroy, iter);
+    return last_status;
+}
+
+int mdp_add_module_to_list(module_t* module)
+{
+    int last_status = MSL_SUCCESS;
+    last_status = LOG_ON_ERR(ADD_VECTOR(module_t), &global_module_list, module);
+    return last_status;
+}
+
+int mdp_query_module_information(HMODULE hmodule, void** module_base, uint32_t* size_of_module, void** entry_point)
+{
+    // Query the information by asking Windows
+    MODULEINFO module_info;
+    if (!GetModuleInformation(GetCurrentProcess(), hmodule, &module_info, sizeof(module_info)))
+    {
+        return MSL_EXTERNAL_ERROR;
+    }
+
+    // Fill in what the caller wants
+    if (module_base)
+        *module_base = module_info.lpBaseOfDll;
+
+    if (size_of_module)
+        *size_of_module = module_info.SizeOfImage;
+
+    if (entry_point)
+        *entry_point = module_info.EntryPoint;
+
+    return MSL_SUCCESS;
+}
+
+int mdp_get_image_path(module_t* module, char** path)
+{
+    int last_status = MSL_SUCCESS;
+    *path = module->image_path;
+    return last_status;
+}
+
+int mdp_get_image_folder(module_t* module, char** path)
+{
+    int last_status = MSL_SUCCESS;
+    char* module_path;
+    last_status = LOG_ON_ERR(mdp_get_image_path, module, &module_path);
+    if (last_status) return last_status;
+
+    if (!has_parent_path(module_path)) return MSL_INVALID_PARAMETER;
+
+    last_status = LOG_ON_ERR(parent_path, module_path, path);
+    return last_status;
 }
 
 int mdp_get_module_base_address(module_t* module, void** ptr)

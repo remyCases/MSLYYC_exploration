@@ -12,6 +12,7 @@ FUNC_HASH(str, size_t)
 FUNC_VEC(module_callback_descriptor_t)
 FUNC_VEC(module_t)
 FUNC_VEC(interface_table_entry_t) 
+FUNC_VEC(char)
 
 int extract_function_entry(interface_impl_t* interface_impl, size_t index, const char** function_name, TRoutine* function_routine, int32_t* argument_count)
 {

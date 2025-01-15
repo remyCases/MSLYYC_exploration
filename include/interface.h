@@ -48,6 +48,8 @@ DEF_VECTOR(module_t)
 DEF_FUNC_VEC(module_t) 
 DEF_VECTOR(interface_table_entry_t)
 DEF_FUNC_VEC(interface_table_entry_t) 
+DEF_VECTOR(char)
+DEF_FUNC_VEC(char)
 
 enum OBJECT_TYPE
 {

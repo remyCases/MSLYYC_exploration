@@ -11,6 +11,7 @@
 // error enum
 #define MACRO_ERROR(X, ...)                     \
     X(MSL_SUCCESS, __VA_ARGS__, SUCCESS)        \
+    X(MSL_INVALID_PARAMETER, __VA_ARGS__)       \
     X(MSL_ACCESS_DENIED, __VA_ARGS__)           \
     X(MSL_FILE_NOT_FOUND, __VA_ARGS__)          \
     X(MSL_INVALID_FILE_SIZE, __VA_ARGS__)       \
@@ -29,6 +30,7 @@
     X(MSL_MODULE_INTERNAL_ERROR, __VA_ARGS__)   \
     X(MSL_MODULE_DEPENDENCY_NOT_RESOLVED, __VA_ARGS__)   \
     X(MSL_EXTERNAL_ERROR, __VA_ARGS__)          \
+    X(MSL_POINTER_NON_NULL, __VA_ARGS__)        \
     X(MSL_UNKNWON_ERROR, __VA_ARGS__)           \
 
 #define LOG_ON_ERR(F, ...) error_print(STR(F), __FILE__, __LINE__, F(__VA_ARGS__))

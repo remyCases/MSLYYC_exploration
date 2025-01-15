@@ -6,6 +6,279 @@
 #include "../include/error.h"
 #include "../include/gml_structs.h"
 
+int iterator_create(const char* path, const char* pattern, directory_iterator_t** directory_iterator) 
+{
+    int last_status = MSL_SUCCESS;
+    directory_iterator_t* iter = NULL;
+    if (*directory_iterator) 
+    {
+        last_status = MSL_POINTER_NON_NULL;
+        goto cleanup;
+    }
+
+    iter = (directory_iterator_t*)malloc(sizeof(directory_iterator_t));
+    if (!iter) 
+    {
+        last_status = MSL_ALLOCATION_ERROR;
+        goto cleanup;
+    }
+
+    size_t path_len = strlen(path);
+    iter->current_path = (char*)malloc(MAX_PATH);
+    if (!iter->current_path) 
+    {
+        last_status = MSL_ALLOCATION_ERROR;
+        goto cleanup;
+    }
+
+    strcpy(iter->current_path, path);
+    if (path[path_len - 1] != '\\') 
+    {
+        strcat(iter->current_path, "\\");
+    }
+
+    iter->pattern = strdup(pattern ? pattern : "*");
+    iter->stack = NULL;
+
+    // Create the initial search pattern
+    char search_path[MAX_PATH];
+    int ret_sprintf = sprintf(search_path, "%s%s", iter->current_path, iter->pattern);
+    if (ret_sprintf == EOF)
+    {
+        last_status = MSL_EXTERNAL_ERROR;
+        goto cleanup;
+    }
+    
+    iter->find_handle = FindFirstFile(search_path, &iter->find_data);
+    if (iter->find_handle == INVALID_HANDLE_VALUE)
+    {
+        
+        last_status = MSL_EXTERNAL_ERROR;
+        goto cleanup;
+    }
+
+    ret:
+    *directory_iterator = iter;
+    return last_status;
+
+    cleanup:
+    if(iter && iter->pattern) free(iter->pattern);
+    if(iter && iter->current_path) free(iter->current_path);
+    if(iter) free(iter);
+    goto ret;
+}
+
+int iterator_next(directory_iterator_t* iter) 
+{
+    while (1) 
+    {
+        // Try to get next file in current directory
+        if (FindNextFile(iter->find_handle, &iter->find_data)) 
+        {
+            return 1;
+        }
+
+        // If no more files in current directory
+        FindClose(iter->find_handle);
+
+        // If we have directories in stack, pop and continue
+        if (iter->stack) 
+        {
+            directory_stack_node_t* top = iter->stack;
+            iter->stack = top->next;
+            
+            strcpy(iter->current_path, top->path);
+            iter->find_handle = top->find_handle;
+            
+            free(top->path);
+            free(top);
+            continue;
+        }
+
+        return 0;  // No more files
+    }
+}
+
+int iterator_enter_directory(directory_iterator_t* iter) 
+{
+    if (!(iter->find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ||
+        strcmp(iter->find_data.cFileName, ".") == 0 ||
+        strcmp(iter->find_data.cFileName, "..") == 0) {
+        return 0;
+    }
+
+    // Push current state to stack
+    directory_stack_node_t* node = (directory_stack_node_t*)malloc(sizeof(directory_stack_node_t));
+    if (!node) return 0;
+
+    node->path = _strdup(iter->current_path);
+    node->find_handle = iter->find_handle;
+    node->next = iter->stack;
+    iter->stack = node;
+
+    // Update current path
+    char newPath[MAX_PATH];
+    sprintf(newPath, "%s%s\\", iter->current_path, iter->find_data.cFileName);
+    strcpy(iter->current_path, newPath);
+
+    // Start new directory search
+    char searchPath[MAX_PATH];
+    sprintf(searchPath, "%s%s", iter->current_path, iter->pattern);
+    
+    iter->find_handle = FindFirstFile(searchPath, &iter->find_data);
+    if (iter->find_handle == INVALID_HANDLE_VALUE) 
+    {
+        return iterator_next(iter);  // Skip empty directories
+    }
+
+    return 1;
+}
+
+int iterator_destroy(directory_iterator_t* iter) 
+{
+    int last_status = MSL_SUCCESS;
+    if (!iter) return MSL_POINTER_NON_NULL;
+
+    // Close current find handle
+    if (iter->find_handle != INVALID_HANDLE_VALUE) {
+        FindClose(iter->find_handle);
+    }
+
+    directory_stack_node_t* top = NULL;
+    // Clean up stack
+    while (iter->stack) 
+    {
+        top = iter->stack;
+        iter->stack = top->next;
+        FindClose(top->find_handle);
+        free(top->path);
+        free(top);
+    }
+
+    free(iter->current_path);
+    free(iter->pattern);
+    free(iter);
+    return last_status;
+}
+
+// Returns 1 if the path has a parent path component
+int has_parent_path(const char* path) 
+{
+    if (!path || !*path) return 0;  // Empty path
+    
+    size_t len = strlen(path);
+    if (len == 0) return 0;
+
+    // Handle root paths
+    if (len == 2 && path[1] == ':') return 0;  // Drive letter only (e.g., "C:")
+    if (len == 3 && path[1] == ':' && (path[2] == '\\' || path[2] == '/')) {
+        return 0;  // Root directory (e.g., "C:\")
+    }
+
+    // Remove trailing slashes
+    while (len > 0 && (path[len - 1] == '\\' || path[len - 1] == '/')) {
+        len--;
+    }
+    if (len == 0) return 0;
+
+    // Look for last separator
+    for (size_t i = len - 1; i > 0; i--) {
+        if (path[i] == '\\' || path[i] == '/') {
+            return 1;
+        }
+    }
+
+    // Check if we have a drive letter prefix
+    if (len > 1 && path[1] == ':') {
+        return len > 2;  // Has something after drive letter
+    }
+
+    return 0;
+}
+
+// Returns the parent path component. Caller must free the returned string.
+// Returns NULL if there is no parent path or on allocation failure.
+int parent_path(const char* path, char** parent)
+{
+    int last_status = MSL_SUCCESS;
+    if (!path || !*path) 
+    {
+        last_status = MSL_INVALID_PARAMETER;
+        goto cleanup;
+    }
+    if (!has_parent_path(path)) 
+    {
+        last_status = MSL_INVALID_PARAMETER;
+        goto cleanup;
+    }
+
+    size_t len = strlen(path);
+    char* result = (char*)malloc(len + 1);
+    if (!result) return MSL_ALLOCATION_ERROR;
+    
+    strcpy(result, path);
+
+    // Remove trailing slashes
+    while (len > 0 && (result[len - 1] == '\\' || result[len - 1] == '/')) 
+    {
+        result[--len] = '\0';
+    }
+    if (len == 0) 
+    {
+        last_status = MSL_INVALID_PARAMETER;
+        goto cleanup;
+    }
+
+    // Find last separator
+    size_t last_sep = 0;
+    for (size_t i = len - 1; i > 0; i--) 
+    {
+        if (result[i] == '\\' || result[i] == '/') 
+        {
+            last_sep = i;
+            break;
+        }
+    }
+
+    // Handle special cases
+    if (last_sep == 0) 
+    {
+        // Check if we have a drive letter
+        if (len > 1 && result[1] == ':') 
+        {
+            if (len > 2) 
+            {
+                result[2] = '\0';  // Keep drive letter and colon
+                *parent = result;
+                goto ret;
+            }
+            last_status = MSL_INVALID_PARAMETER;
+            goto cleanup;
+        }
+        last_status = MSL_INVALID_PARAMETER;
+        goto cleanup;
+    }
+
+    // Handle root directory of a drive
+    if (last_sep == 2 && result[1] == ':') 
+    {
+        result[3] = '\0';  // Keep "C:\"
+        *parent = result;
+        goto ret;
+    }
+
+    // Normal case - truncate at last separator
+    result[last_sep] = '\0';
+    *parent = result;
+
+    ret:
+    return last_status;
+
+    cleanup:
+    if (result) free(result);
+    goto ret;
+}
+
 hash_t hash_key_int(int key)
 {
     return (key * -0x61c8864f + 1) & INT_MAX;
