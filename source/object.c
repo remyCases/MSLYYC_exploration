@@ -4,6 +4,7 @@
 
 #include "../include/object.h"
 #include "../include/interface.h"
+#include "../include/module.h"
 
 VECTOR(module_t) global_module_list;
 
@@ -77,7 +78,7 @@ int obp_lookup_interface_owner_export(const char* interface_name, const char* ex
 
     // Now, get the module base address
     void* module_base_address = NULL;
-    last_status = LOG_ON_ERR(MdpGetModuleBaseAddress, interface_owner, module_base_address);
+    last_status = LOG_ON_ERR(mdp_get_module_base_address, interface_owner, module_base_address);
 
     // Module has no base address?
     if (last_status) return MSL_FILE_PART_NOT_FOUND;
@@ -92,10 +93,10 @@ int obp_lookup_interface_owner_export(const char* interface_name, const char* ex
     return last_status;
 }
 
-int obp_get_object_type(base_object_t* object, int* object_type)
+int obp_get_object_type(base_object_t* base_object, int* object_type)
 {
     int last_status = MSL_SUCCESS;
-    *object_type = object->get_object_type();
+    *object_type = base_object->get_object_type();
     return last_status;
 }
 
@@ -148,7 +149,7 @@ int obp_create_operation_info(module_t* module, bool is_future_call, operation_i
 {
     int last_status = MSL_SUCCESS;
     operation_information->is_future_call = is_future_call;
-    last_status = LOG_ON_ERR(MdpGetModuleBaseAddress, module, &operation_information->module_base_address);
+    last_status = LOG_ON_ERR(mdp_get_module_base_address, module, &operation_information->module_base_address);
     return last_status;
 }
 

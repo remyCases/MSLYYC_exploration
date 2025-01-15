@@ -12,12 +12,14 @@
 #define MACRO_ERROR(X, ...)                     \
     X(MSL_SUCCESS, __VA_ARGS__, SUCCESS)        \
     X(MSL_ACCESS_DENIED, __VA_ARGS__)           \
+    X(MSL_FILE_NOT_FOUND, __VA_ARGS__)          \
     X(MSL_INVALID_FILE_SIZE, __VA_ARGS__)       \
     X(MSL_INSUFFICIENT_MEMORY, __VA_ARGS__)     \
     X(MSL_UNREADABLE_FILE, __VA_ARGS__)         \
+    X(MSL_INVALID_SIGNATURE, __VA_ARGS__)       \
     X(MSL_INVALID_DOS_SIGNATURE, __VA_ARGS__)   \
     X(MSL_INVALID_NT_SIGNATURE, __VA_ARGS__)    \
-    X(MSL_INVALID_FILE_TYPE, __VA_ARGS__)       \
+    X(MSL_INVALID_ARCH, __VA_ARGS__)            \
     X(MSL_FILE_PART_NOT_FOUND, __VA_ARGS__)     \
     X(MSL_NULL_BUFFER, __VA_ARGS__)             \
     X(MSL_ALLOCATION_ERROR, __VA_ARGS__)        \
@@ -26,6 +28,7 @@
     X(MSL_OBJECT_NOT_IN_LIST, __VA_ARGS__)      \
     X(MSL_MODULE_INTERNAL_ERROR, __VA_ARGS__)   \
     X(MSL_MODULE_DEPENDENCY_NOT_RESOLVED, __VA_ARGS__)   \
+    X(MSL_EXTERNAL_ERROR, __VA_ARGS__)          \
     X(MSL_UNKNWON_ERROR, __VA_ARGS__)           \
 
 #define LOG_ON_ERR(F, ...) error_print(STR(F), __FILE__, __LINE__, F(__VA_ARGS__))
