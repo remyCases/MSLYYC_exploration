@@ -42,12 +42,10 @@ int iterator_create(const char* path, const char* pattern, directory_iterator_t*
 
     // Create the initial search pattern
     char search_path[MAX_PATH];
-    int ret_sprintf = sprintf(search_path, "%s%s", iter->current_path, iter->pattern);
-    if (ret_sprintf == EOF)
-    {
-        last_status = MSL_EXTERNAL_ERROR;
-        goto cleanup;
-    }
+    strcpy(search_path, iter->current_path);
+    search_path[MAX_PATH-1] = 0;
+    strcat(search_path, iter->pattern);
+    search_path[MAX_PATH-1] = 0;
     
     iter->find_handle = FindFirstFile(search_path, &iter->find_data);
     if (iter->find_handle == INVALID_HANDLE_VALUE)
@@ -118,14 +116,23 @@ int iterator_enter_directory(directory_iterator_t* iter)
 
     // Update current path
     char newPath[MAX_PATH];
-    sprintf(newPath, "%s%s\\", iter->current_path, iter->find_data.cFileName);
+    strcpy(newPath, iter->current_path);
+    newPath[MAX_PATH-1] = 0;
+    strcat(newPath, iter->find_data.cFileName);
+    newPath[MAX_PATH-1] = 0;
+    strcat(newPath, "\\");
+    newPath[MAX_PATH-1] = 0;
+
     strcpy(iter->current_path, newPath);
 
     // Start new directory search
-    char searchPath[MAX_PATH];
-    sprintf(searchPath, "%s%s", iter->current_path, iter->pattern);
+    char search_path[MAX_PATH];
+    strcpy(search_path, iter->current_path);
+    search_path[MAX_PATH-1] = 0;
+    strcat(search_path, iter->pattern);
+    search_path[MAX_PATH-1] = 0;
     
-    iter->find_handle = FindFirstFile(searchPath, &iter->find_data);
+    iter->find_handle = FindFirstFile(search_path, &iter->find_data);
     if (iter->find_handle == INVALID_HANDLE_VALUE) 
     {
         return iterator_next(iter);  // Skip empty directories
