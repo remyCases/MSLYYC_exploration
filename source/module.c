@@ -131,7 +131,7 @@ int mdp_map_image(const char* image_path, HMODULE* image_base)
     if (!has_either_entry) return MSL_INVALID_SIGNATURE;
 
     module_t* potential_loaded_copy = NULL;
-    last_status = MdpLookupModuleByPath(image_path, potential_loaded_copy);
+    last_status = LOG_ON_ERR(mdp_lookup_module_by_path, image_path, &potential_loaded_copy);
     
     // If there's a module that's already loaded from the same path, deny loading it twice
     if (last_status == MSL_SUCCESS) return MSL_OBJECT_ALREADY_EXISTS;
@@ -229,9 +229,98 @@ int mdp_get_image_folder(module_t* module, char** path)
     return last_status;
 }
 
+int mdp_get_next_module(module_t* module, module_t** next_module)
+{
+    // Find the module in our list (gets an iterator)
+    for (size_t i = 0; i < global_module_list.size; i++)
+    {
+        if (&global_module_list.arr[i] == module)
+        {
+            *next_module = &global_module_list.arr[(i + 1) % global_module_list.size];    
+            return MSL_SUCCESS;
+        }
+    }
+
+    return MSL_INVALID_PARAMETER;
+}
+
 int mdp_get_module_base_address(module_t* module, void** ptr)
 {
     int last_status = MSL_SUCCESS;
     *ptr = module->image_base.pointer;
+    return last_status;
+}
+
+int mdp_lookup_module_by_path(const char* module_path, module_t** module)
+{
+    int last_status = MSL_SUCCESS;
+    int equivalent;
+    for (size_t i = 0; i < global_module_list.size; i++)
+    {
+        last_status = LOG_ON_ERR(paths_are_equivalent, module_path, global_module_list.arr[i].image_path, &equivalent);
+        if (last_status) return last_status;
+
+        if (equivalent)
+        {
+            *module = &global_module_list.arr[i];
+            return MSL_SUCCESS;
+        }
+    }
+
+    return MSL_INVALID_PARAMETER;
+}
+
+int mdp_process_image_exports(const char* image_path, HMODULE image_base_address, module_t* module_image)
+{
+    // Find all the required functions
+    int last_status = MSL_SUCCESS;
+    uintptr_t framework_init_offset;
+    uintptr_t module_init_offset;
+    uintptr_t module_preload_offset;
+    uintptr_t module_callback_offset;
+    uintptr_t module_unload_offset;
+
+    // We always need __AurieFrameworkInit to exist.
+    last_status = LOG_ON_ERR(pp_find_file_export_by_name, image_path, "__AurieFrameworkInit", &framework_init_offset);
+    if (last_status) return last_status;
+    if (framework_init_offset) return MSL_FILE_PART_NOT_FOUND;
+
+    // We also need either a ModuleInitialize or a ModulePreinitialize function.
+    last_status = LOG_ON_ERR(pp_find_file_export_by_name, image_path, "ModuleInitialize", &module_init_offset);
+    if (last_status) return last_status;
+    last_status = LOG_ON_ERR(pp_find_file_export_by_name, image_path, "ModulePreinitialize", &module_preload_offset);
+    if (last_status) return last_status;
+    if (module_init_offset || module_preload_offset) return MSL_FILE_PART_NOT_FOUND;
+
+    last_status = LOG_ON_ERR(pp_find_file_export_by_name, image_path, "ModuleOperationCallback", &module_callback_offset);
+    if (last_status) return last_status;
+    last_status = LOG_ON_ERR(pp_find_file_export_by_name, image_path, "ModuleUnload", &module_unload_offset);
+    if (last_status) return last_status;
+
+    // Cast the problems away
+    char* image_base = (char*)(image_base_address);
+
+    Entry module_init = (Entry)(image_base + module_init_offset);
+    Entry module_preload = (Entry)(image_base + module_preload_offset);
+    Entry module_unload = (Entry)(image_base + module_unload_offset);
+    LoaderEntry framework_init = (LoaderEntry)(image_base + framework_init_offset);
+    ModuleCallback module_callback = (ModuleCallback)(image_base + module_callback_offset);
+
+    // If the offsets are zero, the function wasn't found, which means we shouldn't populate the field.
+    if (module_init_offset)
+        module_image->module_initialize = module_init;
+
+    if (module_preload_offset)
+        module_image->module_preinitialize = module_preload;
+
+    if (framework_init_offset)
+        module_image->framework_initialize = framework_init;
+
+    if (module_callback_offset)
+        module_image->module_operation_callback = module_callback;
+
+    if (module_unload_offset)
+        module_image->module_unload = module_unload;
+
     return last_status;
 }

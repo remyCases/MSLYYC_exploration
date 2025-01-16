@@ -286,6 +286,82 @@ int parent_path(const char* path, char** parent)
     goto ret;
 }
 
+static int get_file_info(const char* path, BY_HANDLE_FILE_INFORMATION* result) 
+{
+    // Get file attributes first
+    unsigned long attributes = GetFileAttributesA(path);
+    if (attributes == INVALID_FILE_ATTRIBUTES) 
+    {
+        return MSL_INVALID_FILE_ATTRIBUTE;
+    }
+
+    // Open file/directory handle with minimal permissions needed
+    unsigned long access = 0; // We don't need any access rights for this
+    unsigned long share = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
+    unsigned long flags = FILE_FLAG_BACKUP_SEMANTICS; // Needed for directories
+    
+    HANDLE handle = CreateFileA(path, access, share, NULL, OPEN_EXISTING, flags, NULL);
+    if (handle == INVALID_HANDLE_VALUE) 
+    {
+        return MSL_INVALID_HANDLE_VALUE;
+    }
+
+    // Get file information
+    if (!GetFileInformationByHandle(handle, result)) 
+    {
+        CloseHandle(handle);
+        return MSL_EXTERNAL_ERROR;
+    }
+
+    CloseHandle(handle);
+    return MSL_SUCCESS;
+}
+
+int paths_are_equivalent(const char* path1, const char* path2, int* equivalent) 
+{
+    int last_status = MSL_SUCCESS;
+    *equivalent = 0;
+    if (!path1 || !path2) 
+    {
+        return MSL_INVALID_PARAMETER;
+    }
+
+    // Get full paths first
+    char full_path1[MAX_PATH];
+    char full_path2[MAX_PATH];
+
+    if (!GetFullPathNameA(path1, MAX_PATH, full_path1, NULL) ||
+        !GetFullPathNameA(path2, MAX_PATH, full_path2, NULL)) 
+    {
+        return MSL_INVALID_PARAMETER;
+    }
+
+    // If paths are identical after normalization, they're equivalent
+    if (stricmp(full_path1, full_path2) == 0) 
+    {
+        return MSL_SUCCESS;
+    }
+
+    BY_HANDLE_FILE_INFORMATION info1;
+    BY_HANDLE_FILE_INFORMATION info2;
+    // Get file information for both paths
+    last_status = LOG_ON_ERR(get_file_info, full_path1, &info1);
+    if (last_status) return last_status;
+
+    last_status = LOG_ON_ERR(get_file_info, full_path2, &info2);
+    if (last_status) return last_status;
+
+    // Compare volume serial numbers and file IDs
+    if (info1.dwVolumeSerialNumber == info2.dwVolumeSerialNumber &&
+        info1.nFileIndexHigh == info2.nFileIndexHigh &&
+        info1.nFileIndexLow == info2.nFileIndexLow) 
+    {
+        *equivalent = 1;
+    }
+
+    return MSL_SUCCESS;
+}
+
 hash_t hash_key_int(int key)
 {
     return (key * -0x61c8864f + 1) & INT_MAX;
