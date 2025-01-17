@@ -211,11 +211,54 @@ int INIT_VECTOR(T)(VECTOR(T)* vec) {                \
 	return MSL_SUCCESS;                             \
 } 
 
-#define FREE_VECTOR(T) S_CAT_UND(free, vec, T)
-#define _FREE_VECTOR(T)                     \
-int FREE_VECTOR(T)(VECTOR(T)* vec) {        \
-	free(vec->arr);                         \
-	return MSL_SUCCESS;                     \
+#define CLEAR_FAST_VECTOR(T) S_CAT_UND(clear_fast, vec, T)
+#define _CLEAR_FAST_VECTOR(T)                           \
+int CLEAR_FAST_VECTOR(T)(VECTOR(T)* vec) {              \
+	if (vec == NULL) return MSL_NULL_BUFFER;            \
+	if (vec->arr == NULL) return MSL_INVALID_PARAMETER; \
+	vec->size = 0;                                      \
+	return MSL_SUCCESS;                                 \
+}
+
+#define CLEAR_SECURE_VECTOR(T) S_CAT_UND(clear_secure, vec, T)
+#define _CLEAR_SECURE_VECTOR(T)                         \
+int CLEAR_SECURE_VECTOR(T)(VECTOR(T)* vec) {            \
+	if (vec == NULL) return MSL_NULL_BUFFER;            \
+	if (vec->arr == NULL) return MSL_INVALID_PARAMETER; \
+	memset(vec->arr, 0, vec->capacity * sizeof(T));     \
+	vec->size = 0;                                      \
+	return MSL_SUCCESS;                                 \
+}
+
+#define CLEAR_FREE_VECTOR(T) S_CAT_UND(clear_free, vec, T)
+#define _CLEAR_FREE_VECTOR(T)                                       \
+int CLEAR_FREE_VECTOR(T)(VECTOR(T)* vec, void (*destructor)(T*)) {  \
+	if (vec == NULL) return MSL_NULL_BUFFER;                        \
+	if (vec->arr == NULL) return MSL_INVALID_PARAMETER;             \
+	if (destructor != NULL) {                                       \
+        for (size_t i = 0; i < vec->size; i++) {                    \
+            destructor(&vec->arr[i]);                               \
+        }                                                           \
+    }                                                               \
+	free(vec->arr);                                                 \
+	vec->arr = NULL;                                                \
+	vec->size = 0;                                                  \
+	vec->capacity = 0;                                              \
+	return MSL_SUCCESS;                                             \
+}
+
+#define CLEAR_VECTOR(T) S_CAT_UND(clear, vec, T)
+#define _CLEAR_VECTOR(T)                                       \
+int CLEAR_VECTOR(T)(VECTOR(T)* vec, void (*destructor)(T*)) {  \
+	if (vec == NULL) return MSL_NULL_BUFFER;                   \
+	if (vec->arr == NULL) return MSL_INVALID_PARAMETER;        \
+	if (destructor != NULL) {                                  \
+        for (size_t i = 0; i < vec->size; i++) {               \
+            destructor(&vec->arr[i]);                          \
+        }                                                      \
+    }                                                          \
+	vec->size = 0;                                             \
+	return MSL_SUCCESS;                                        \
 }
 
 #define RESIZE_VECTOR(T) S_CAT_UND(resize, vec, T)
@@ -240,17 +283,40 @@ int ADD_VECTOR(T)(VECTOR(T)* vec, T* elmt) {        \
 	return status;                                  \
 }
 
-#define FUNC_VEC(T)     \
-    _INIT_VECTOR(T)     \
-    _FREE_VECTOR(T)     \
-    _RESIZE_VECTOR(T)   \
-    _ADD_VECTOR(T)
+#define REMOVE_VECTOR(T) S_CAT_UND(remove, vec, T)
+#define _REMOVE_VECTOR(T)                           \
+int REMOVE_VECTOR(T)(VECTOR(T)* vec, T* elmt) {     \
+	size_t new_size = vec->size;                    \
+    for(size_t i = 0; i < vec->size; i++) {         \
+        if (&vec->arr[i] == elmt) {                 \
+            vec->arr[i] = vec->arr[new_size - 1];   \
+            new_size--;                             \
+            if (!new_size) break;                   \
+        }                                           \
+    }                                               \
+    vec->size = new_size;                           \
+	return MSL_SUCCESS;                             \
+}
 
-#define DEF_FUNC_VEC(T)     \
-    int INIT_VECTOR(T)(VECTOR(T)*);     \
-    int FREE_VECTOR(T)(VECTOR(T)*);     \
-    int RESIZE_VECTOR(T)(VECTOR(T)*);   \
-    int ADD_VECTOR(T)(VECTOR(T)*, T*);
+#define FUNC_VEC(T)         \
+    _INIT_VECTOR(T)         \
+    _CLEAR_FAST_VECTOR(T)   \
+    _CLEAR_SECURE_VECTOR(T) \
+    _CLEAR_FREE_VECTOR(T)   \
+    _CLEAR_VECTOR(T)        \
+    _RESIZE_VECTOR(T)       \
+    _ADD_VECTOR(T)          \
+    _REMOVE_VECTOR(T)       
+
+#define DEF_FUNC_VEC(T)                                             \
+    int INIT_VECTOR(T)(VECTOR(T)*);                                 \
+    int CLEAR_FAST_VECTOR(T)(VECTOR(T)*);                           \
+    int CLEAR_SECURE_VECTOR(T)(VECTOR(T)*);                         \
+    int CLEAR_FREE_VECTOR(T)(VECTOR(T)*, void (*destructor)(T*));   \
+    int CLEAR_VECTOR(T)(VECTOR(T)*, void (*destructor)(T*));        \
+    int RESIZE_VECTOR(T)(VECTOR(T)*);                               \
+    int ADD_VECTOR(T)(VECTOR(T)*, T*);                              \
+    int REMOVE_VECTOR(T)(VECTOR(T)*, T*);
 
 #define HASH_KEY(K) CAT_UND(HASH_KEY, K)
 #define HASH_KEY_str hash_key_str
