@@ -298,6 +298,13 @@ int REMOVE_VECTOR(T)(VECTOR(T)* vec, T* elmt) {     \
 	return MSL_SUCCESS;                             \
 }
 
+#define SORT_VECTOR(T) S_CAT_UND(sort, vec, T)
+#define _SORT_VECTOR(T)                                                             \
+int SORT_VECTOR(T)(VECTOR(T)* vec, int(*comparator)(const void *, const void *)) {  \
+	qsort(vec->arr, vec->size, sizeof(T), comparator);                              \
+	return MSL_SUCCESS;                                                             \
+}
+
 #define FUNC_VEC(T)         \
     _INIT_VECTOR(T)         \
     _CLEAR_FAST_VECTOR(T)   \
@@ -306,7 +313,8 @@ int REMOVE_VECTOR(T)(VECTOR(T)* vec, T* elmt) {     \
     _CLEAR_VECTOR(T)        \
     _RESIZE_VECTOR(T)       \
     _ADD_VECTOR(T)          \
-    _REMOVE_VECTOR(T)       
+    _REMOVE_VECTOR(T)       \
+    _SORT_VECTOR(T)       
 
 #define DEF_FUNC_VEC(T)                                             \
     int INIT_VECTOR(T)(VECTOR(T)*);                                 \
@@ -316,7 +324,8 @@ int REMOVE_VECTOR(T)(VECTOR(T)* vec, T* elmt) {     \
     int CLEAR_VECTOR(T)(VECTOR(T)*, void (*destructor)(T*));        \
     int RESIZE_VECTOR(T)(VECTOR(T)*);                               \
     int ADD_VECTOR(T)(VECTOR(T)*, T*);                              \
-    int REMOVE_VECTOR(T)(VECTOR(T)*, T*);
+    int REMOVE_VECTOR(T)(VECTOR(T)*, T*);                           \
+    int SORT_VECTOR(T)(VECTOR(T)*, int(*comparator)(const void *, const void *));                           
 
 #define HASH_KEY(K) CAT_UND(HASH_KEY, K)
 #define HASH_KEY_str hash_key_str
