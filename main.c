@@ -17,7 +17,7 @@
 
 static interface_t* global_interface = NULL;
 
-void save_game(FWCodeEvent* code_event)
+int save_game(FWCodeEvent* code_event)
 {
     code_t* code = code_event->args._2;
     int last_status = MSL_SUCCESS;
@@ -53,8 +53,8 @@ int module_initialize(module_t* module, const char* module_path)
     int last_status = MSL_SUCCESS;
     CALL_RETURN_ERROR(ob_get_interface, MSL_MODULE_DEPENDENCY_NOT_RESOLVED, "YYTK_Main", (interface_base_t**)(&global_interface));
 
-    global_interface->print_warning("Hello Mod");
-    global_interface->create_callback(module, EVENT_OBJECT_CALL, save_game, 0);
+    CALL(global_interface->print_warning, "Hello Mod");
+    CALL(global_interface->create_callback, module, EVENT_OBJECT_CALL, save_game, 0);
 
     return last_status;
 }

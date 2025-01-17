@@ -183,7 +183,7 @@ struct interface_s
     int(*call_builtin)(const char* function_name, rvalue_t* args, size_t arg_size, rvalue_t* out);
     int(*call_builtin_ex)(interface_impl_t*, rvalue_t*, const char*, instance_t*, instance_t*, rvalue_t*, size_t);
     
-    void(*print_warning)(const char*);
+    int(*print_warning)(const char*);
 
     int(*create_callback)(module_t* module, EVENT_TRIGGERS trigger, void* routine, int32_t priority);
     int(*remove_callback)(module_t* module, void* routine);
