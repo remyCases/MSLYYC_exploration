@@ -10,6 +10,7 @@
 
 int ob_create_interface(module_t*, interface_base_t*, const char*);
 int ob_interface_exists(const char*);
+int obp_dispatch_module_operation_callbacks(module_t*, Entry, bool);
 int ob_get_interface(const char*, interface_base_t**);
 int ob_destroy_interface(module_t*, const char*);
 #endif  /* !OBJECT_H_ */

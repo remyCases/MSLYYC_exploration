@@ -21,5 +21,8 @@ int mdp_get_next_module(module_t*, module_t**);
 int mdp_get_module_base_address(module_t*, void**);
 int mdp_lookup_module_by_path(const char*, module_t**);
 int mdp_process_image_exports(const char*, HMODULE, module_t*);
-
+int mdp_unmap_image(module_t*, bool, bool);
+int mdp_dispatch_entry(module_t*, Entry);
+int md_is_image_preinitialized(module_t*, bool*);
+int md_unmap_image(module_t*);
 #endif  /* !MODULE_H_ */

@@ -4,6 +4,7 @@
 
 #include "../include/module.h"
 #include "../include/error.h"
+#include "../include/object.h"
 #include "Psapi.h"
 
 #ifdef WIN32
@@ -66,7 +67,7 @@ int mdp_purge_marked_modules(void)
         if (purge_flag)
         {
             // Unmap the module, but don't call the unload routine, and don't remove it from the list
-            last_status = LOG_ON_ERR(mdp_unmap_image, &module, false, false);
+            last_status = LOG_ON_ERR(mdp_unmap_image, module, false, false);
             if (last_status) return last_status;
         }
     }
@@ -322,5 +323,102 @@ int mdp_process_image_exports(const char* image_path, HMODULE image_base_address
     if (module_unload_offset)
         module_image->module_unload = module_unload;
 
+    return last_status;
+}
+
+int mdp_unmap_image(module_t* module, bool remove_from_list, bool call_unload_routine)
+{
+    int last_status = MSL_SUCCESS;
+
+    // We don't have to do anything else, since SafetyHook will handle everything for us.
+    // Truly a GOATed library, thank you @localcc for telling me about it love ya
+    // C note: inline_hook_t and mid_hooks_t need a custom destructor to call the destructor from SafetyHook
+    last_status = LOG_ON_ERR(CLEAR_VECTOR(inline_hook_t), &module->inline_hooks, destructor_inline_hook_t);
+    if (last_status) return last_status;
+    last_status = LOG_ON_ERR(CLEAR_VECTOR(mid_hook_t), &module->mid_hooks, destructor_mid_hook_t);
+    if (last_status) return last_status;
+
+    // Call the unload entry if needed
+    if (call_unload_routine)
+    {
+        last_status = LOG_ON_ERR(mdp_dispatch_entry, module, module->module_unload);
+        if (last_status) return last_status;
+    }
+
+    // Remove the module's operation callback
+    module->module_operation_callback = NULL;
+
+    // Destory all interfaces created by the module
+    for (size_t i = 0; i < module->interface_table.size; i++)
+    {
+        last_status = LOG_ON_ERR(module->interface_table.arr[i].intf->destroy);
+        if (last_status) return last_status;
+    }
+
+    // Wipe them off the interface table
+    // Note these can't be freed, they're allocated by the owner module
+    // C note: interface_table_entry_t has only ptr, so no need for a custom destructor here
+    last_status = LOG_ON_ERR(CLEAR_VECTOR(interface_table_entry_t), &module->interface_table, NULL);
+    if (last_status) return last_status;
+
+    memory_allocation_t* mem_alloc = NULL;
+    // Free all memory allocated by the module (except persistent memory)
+    for (size_t i = 0; i < module->memory_allocations.size; i++)
+    {
+        mem_alloc = &module->memory_allocations.arr[i];
+        last_status = LOG_ON_ERR(mmp_free_memory, mem_alloc->owner_module, mem_alloc->allocation_base, false);
+        if (last_status) return last_status;
+    }
+
+    // Remove all the allocation entries, they're now invalid
+    // C note: memory_allocation_t has only ptr, so no need for a custom destructor here
+    last_status = LOG_ON_ERR(CLEAR_VECTOR(memory_allocation_t), &module->memory_allocations, NULL);
+    if (last_status) return last_status;
+
+    // Free the module
+    FreeLibrary(module->image_base.hmodule);
+
+    // Remove the module from our list if needed
+    if (remove_from_list)
+    {   
+        last_status = LOG_ON_ERR(REMOVE_VECTOR(module_t), &global_module_list, module);
+        if (last_status) return last_status;
+    }
+
+    return last_status;
+}
+
+int mdp_dispatch_entry(module_t* module, Entry entry)
+{
+    int last_status = MSL_SUCCESS;
+    // Ignore dispatch attempts for the initial module
+    if (module == global_initial_image) return MSL_SUCCESS;
+
+    last_status = LOG_ON_ERR(obp_dispatch_module_operation_callbacks, module, entry, true);
+    if (last_status) return last_status;
+
+    char* path;
+    last_status = LOG_ON_ERR(mdp_get_image_path, module, &path);
+    if (last_status) return last_status;
+    last_status = LOG_ON_ERR(module->framework_initialize, global_initial_image, pp_get_framework_routine, entry, path, module);
+    if (last_status) return last_status;
+
+    last_status = LOG_ON_ERR(obp_dispatch_module_operation_callbacks, module, entry, false);
+    return last_status;
+}
+
+int md_is_image_preinitialized(module_t* module, bool* preinitialized)
+{
+    int last_status = MSL_SUCCESS;
+    *preinitialized = module->flags.is_preloaded;
+    return last_status;
+}
+
+int md_unmap_image(module_t* module)
+{
+    int last_status = MSL_SUCCESS;
+    if (module == global_initial_image) return MSL_ACCESS_DENIED;
+
+    last_status = LOG_ON_ERR(mdp_unmap_image, module, true, true);
     return last_status;
 }
