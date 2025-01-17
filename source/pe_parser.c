@@ -98,10 +98,8 @@ int ppi_get_module_section_bounds(void* image, const char* section_name, uint64_
     int last_status = MSL_SUCCESS;
 
     PIMAGE_NT_HEADERS nt_header = NULL;
-    last_status = ppi_get_nt_header(image, (void*)(nt_header));
-
     // NT Header query failed, not a valid image?
-    if (last_status) return last_status;
+    CALL(ppi_get_nt_header, image, (void*)(nt_header));
 
     PIMAGE_SECTION_HEADER first_section = (PIMAGE_SECTION_HEADER)(nt_header + 1);
 

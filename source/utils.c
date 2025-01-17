@@ -109,7 +109,7 @@ int iterator_enter_directory(directory_iterator_t* iter)
     directory_stack_node_t* node = (directory_stack_node_t*)malloc(sizeof(directory_stack_node_t));
     if (!node) return 0;
 
-    node->path = _strdup(iter->current_path);
+    node->path = strdup(iter->current_path);
     node->find_handle = iter->find_handle;
     node->next = iter->stack;
     iter->stack = node;
@@ -169,38 +169,64 @@ int iterator_destroy(directory_iterator_t* iter)
 }
 
 // Returns 1 if the path has a parent path component
-int has_parent_path(const char* path) 
+int has_parent_path(const char* path, bool* parent_path) 
 {
-    if (!path || !*path) return 0;  // Empty path
-    
+    if (!path || !*path) // Empty path
+    {
+        *parent_path = false;
+        goto ret;
+    }
+
     size_t len = strlen(path);
-    if (len == 0) return 0;
+    if (len == 0)
+    {
+        *parent_path = false;
+        goto ret;
+    }
 
     // Handle root paths
-    if (len == 2 && path[1] == ':') return 0;  // Drive letter only (e.g., "C:")
-    if (len == 3 && path[1] == ':' && (path[2] == '\\' || path[2] == '/')) {
-        return 0;  // Root directory (e.g., "C:\")
+    if (len == 2 && path[1] == ':') // Drive letter only (e.g., "C:")
+    {
+        *parent_path = false;
+        goto ret;
+    }
+    if (len == 3 && path[1] == ':' && (path[2] == '\\' || path[2] == '/')) // Root directory (e.g., "C:\")
+    {
+        *parent_path = false;
+        goto ret;
     }
 
     // Remove trailing slashes
-    while (len > 0 && (path[len - 1] == '\\' || path[len - 1] == '/')) {
+    while (len > 0 && (path[len - 1] == '\\' || path[len - 1] == '/')) 
+    {
         len--;
     }
-    if (len == 0) return 0;
+    if (len == 0)
+    {
+        *parent_path = false;
+        goto ret;
+    }
 
     // Look for last separator
-    for (size_t i = len - 1; i > 0; i--) {
-        if (path[i] == '\\' || path[i] == '/') {
-            return 1;
+    for (size_t i = len - 1; i > 0; i--) 
+    {
+        if (path[i] == '\\' || path[i] == '/') 
+        {
+            *parent_path = false;
+            goto ret;
         }
     }
 
     // Check if we have a drive letter prefix
-    if (len > 1 && path[1] == ':') {
-        return len > 2;  // Has something after drive letter
+    if (len > 1 && path[1] == ':') 
+    {
+        *parent_path = len > 2;  // Has something after drive letter
+        goto ret;
     }
 
-    return 0;
+    *parent_path = false;
+    ret:
+    return MSL_SUCCESS;
 }
 
 // Returns the parent path component. Caller must free the returned string.
@@ -213,7 +239,10 @@ int parent_path(const char* path, char** parent)
         last_status = MSL_INVALID_PARAMETER;
         goto cleanup;
     }
-    if (!has_parent_path(path)) 
+    bool parent;
+    CALL(has_parent_path, path, &parent);
+
+    if (!parent) 
     {
         last_status = MSL_INVALID_PARAMETER;
         goto cleanup;
@@ -286,6 +315,131 @@ int parent_path(const char* path, char** parent)
     goto ret;
 }
 
+int is_regular_file(const char* path, bool* regular_file) 
+{
+    if (!path || !*path)
+    {
+        *regular_file = false;
+        return MSL_SUCCESS;
+    }
+    
+    unsigned long attrs = GetFileAttributesA(path);
+    if (attrs == INVALID_FILE_ATTRIBUTES)
+    {
+        *regular_file = false;
+        return MSL_INVALID_FILE_ATTRIBUTE;
+    }
+    
+    *regular_file = !(attrs & FILE_ATTRIBUTE_DIRECTORY) && 
+                    !(attrs & FILE_ATTRIBUTE_DEVICE) &&
+                    !(attrs & FILE_ATTRIBUTE_REPARSE_POINT);
+    
+    return MSL_SUCCESS;
+}
+
+int has_filename(const char* path, bool* filename) 
+{
+    if (!path || !*path)
+    {
+        *filename = false;
+        goto ret;
+    }
+    
+    size_t len = strlen(path);
+    if (len == 0)
+    {
+        *filename = false;
+        goto ret;
+    }
+    
+    // Skip trailing slashes
+    while (len > 0 && (path[len-1] == '\\' || path[len-1] == '/')) 
+    {
+        len--;
+    }
+    if (len == 0)
+    {
+        *filename = false;
+        goto ret;
+    }
+    
+    // Check for special cases
+    if (len == 2 && path[1] == ':')  // Drive letter only
+    {
+        *filename = false;
+        goto ret;
+    }
+    if (len == 3 && path[1] == ':' && (path[2] == '\\' || path[2] == '/')) // Root dir
+    {
+        *filename = false;
+        goto ret;
+    }  
+    
+    // Look for last separator
+    for (size_t i = len-1; i > 0; i--) 
+    {
+        if (path[i] == '\\' || path[i] == '/') 
+        {
+            *filename = path[i+1] != '\0';  // Has something after separator
+            goto ret;
+        }
+    }
+    
+
+    *filename = true;  // No separators found, entire path is filename
+    ret:
+    return MSL_SUCCESS;
+}
+
+int filename(const char* path, char** filename) 
+{
+    int last_status = MSL_SUCCESS;
+    bool flag;
+    CALL(has_filename, path, &flag);
+    if (!path || !flag) 
+    {
+        last_status = MSL_SUCCESS;
+        *filename = NULL;
+        goto ret;
+    }
+    
+    size_t len = strlen(path);
+    // Skip trailing slashes
+    while (len > 0 && (path[len-1] == '\\' || path[len-1] == '/')) 
+    {
+        len--;
+    }
+    
+    // Find last separator
+    const char* last_sep = NULL;
+    for (size_t i = 0; i < len; i++) 
+    {
+        if (path[i] == '\\' || path[i] == '/') 
+        {
+            last_sep = &path[i];
+        }
+    }
+    
+    // Extract filename
+    const char* fname_start = last_sep ? last_sep + 1 : path;
+    size_t fname_len = &path[len] - fname_start;
+    
+    char* result = (char*)malloc(fname_len + 1);
+    if (!result) 
+    {
+        last_status = MSL_ALLOCATION_ERROR;
+        *filename = NULL;
+        goto ret;
+    }
+    
+    memcpy(result, fname_start, fname_len);
+    result[fname_len] = '\0';
+    *filename = result;
+
+    ret:
+    return last_status;
+}
+
 static int get_file_info(const char* path, BY_HANDLE_FILE_INFORMATION* result) 
 {
     // Get file attributes first
@@ -345,11 +499,8 @@ int paths_are_equivalent(const char* path1, const char* path2, int* equivalent)
     BY_HANDLE_FILE_INFORMATION info1;
     BY_HANDLE_FILE_INFORMATION info2;
     // Get file information for both paths
-    last_status = LOG_ON_ERR(get_file_info, full_path1, &info1);
-    if (last_status) return last_status;
-
-    last_status = LOG_ON_ERR(get_file_info, full_path2, &info2);
-    if (last_status) return last_status;
+    CALL(get_file_info, full_path1, &info1);
+    CALL(get_file_info, full_path2, &info2);
 
     // Compare volume serial numbers and file IDs
     if (info1.dwVolumeSerialNumber == info2.dwVolumeSerialNumber &&
