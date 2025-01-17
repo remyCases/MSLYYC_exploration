@@ -13,6 +13,19 @@ FUNC_VEC(module_callback_descriptor_t)
 FUNC_VEC(module_t)
 FUNC_VEC(interface_table_entry_t) 
 FUNC_VEC(char)
+FUNC_VEC(memory_allocation_t)
+FUNC_VEC(inline_hook_t)
+FUNC_VEC(mid_hook_t)
+
+void destructor_inline_hook_t(inline_hook_t* inline_hook)
+{
+	safety_hook_inline_destroy(inline_hook->hook_instance);
+}
+
+void destructor_mid_hook_t(mid_hook_t* mid_hook)
+{
+	safety_hook_mid_destroy(mid_hook->hook_instance);
+}
 
 int extract_function_entry(interface_impl_t* interface_impl, size_t index, const char** function_name, TRoutine* function_routine, int32_t* argument_count)
 {

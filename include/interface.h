@@ -24,7 +24,7 @@ typedef enum MODULE_OPERATION_TYPE MODULE_OPERATION_TYPE;
 
 typedef struct module_callback_descriptor_s module_callback_descriptor_t;
 typedef struct operation_info_s operation_info_t;
-typedef struct inline_hook_t_s inline_hook_t_t;
+typedef struct inline_hook_s inline_hook_t;
 typedef struct mid_hook_s mid_hook_t;
 typedef struct memory_allocation_s memory_allocation_t;
 typedef struct module_s module_t;
@@ -47,12 +47,18 @@ DEF_FUNC_VEC(module_callback_descriptor_t)
 DEF_VECTOR(module_t)
 DEF_FUNC_VEC(module_t) 
 DEF_VECTOR(interface_table_entry_t)
-DEF_FUNC_VEC(interface_table_entry_t) 
+DEF_FUNC_VEC(interface_table_entry_t)
 DEF_VECTOR(char)
 DEF_FUNC_VEC(char)
+DEF_VECTOR(memory_allocation_t)
+DEF_FUNC_VEC(memory_allocation_t)
+DEF_VECTOR(inline_hook_t)
+DEF_FUNC_VEC(inline_hook_t)
+DEF_VECTOR(mid_hook_t)
+DEF_FUNC_VEC(mid_hook_t)
 
 enum OBJECT_TYPE
-{
+{ 
     // An AurieModule object
     OBJECT_MODULE = 1,
     // An AurieInterfaceBase object
@@ -128,7 +134,7 @@ struct operation_info_s
     void* module_base_address;
 };
 
-struct inline_hook_t_s
+struct inline_hook_s
 {
     int(*get_object_type)(void);
     module_t* owner;
@@ -352,7 +358,7 @@ struct module_s
     // Describes the image base (and by extent the module).
     union
     {
-        HMODULE module;
+        HMODULE hmodule;
         void* pointer;
         unsigned long long address;
     } image_base;
@@ -389,18 +395,21 @@ struct module_s
     // 
     // If the allocation is made in the global context (i.e. by MmAllocatePersistentMemory)
     // the allocation is put into g_ArInitialImage of the framework module.
-    memory_allocation_t* memory_allocations;
+    VECTOR(memory_allocation_t) memory_allocations;
 
     // Functions hooked by the module by Mm*Hook functions
-    inline_hook_t_t* inline_hooks;
-    mid_hook_t* mid_hooks;
+    VECTOR(inline_hook_t) inline_hooks;
+    VECTOR(mid_hook_t) mid_hooks;
 
     // If set, notifies the plugin of any module actions
     ModuleCallback module_operation_callback;
 };
 
 extern VECTOR(module_t) global_module_list;
+extern module_t* global_initial_image;
 
+void destructor_inline_hook_t(inline_hook_t*);
+void destructor_mid_hook_t(mid_hook_t*);
 rvalue_t init_rvalue(void);
 rvalue_t init_rvalue_bool(bool);
 rvalue_t init_rvalue_double(double);
