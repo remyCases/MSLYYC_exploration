@@ -37,6 +37,13 @@
     X(MSL_UNKNWON_ERROR, __VA_ARGS__)           \
 
 #define LOG_ON_ERR(F, ...) error_print(STR(F), __FILE__, __LINE__, F(__VA_ARGS__))
+#define CALL(F, ...)                            \
+    last_status = LOG_ON_ERR(F, __VA_ARGS__);   \
+    if (last_status) return last_status;
+
+#define CALL_RETURN_ERROR(F, E, ...)            \
+    last_status = LOG_ON_ERR(F, __VA_ARGS__);   \
+    if (last_status) return E;
 
 typedef enum ERROR_MLS_ {
     MACRO_ERROR(TO_ENUM)

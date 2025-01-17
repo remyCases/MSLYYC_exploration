@@ -9,14 +9,14 @@
 #include "gml_structs.h"
 #include <stdbool.h>
 
-#define CALL(F, T)										\
+#define _CALL(F, T)										\
 T Call(F* f) {											\
 	f->called_original = true;							\
 	f->result = f->function(f->args);					\
 	return f->result;									\
 }
 
-#define CALLA(F, T, ...)								\
+#define _CALLA(F, T, ...)								\
 T Call(F* f, __VA_ARGS__) {								\
 	f->called_original = true;							\
 	f->result = f->function(__VA_ARGS__);				\
@@ -63,5 +63,5 @@ FUNCTION_WRAPPER(FWCodeEvent, bool, instance_t*, instance_t*, code_t*, int, rval
 FUNCTION_WRAPPER(FWFrame, HRESULT, IDXGISwapChain*, UINT, UINT)
 FUNCTION_WRAPPER(FWResize, HRESULT, IDXGISwapChain*, UINT, UINT, UINT, DXGI_FORMAT, UINT)
 FUNCTION_WRAPPER(FWWndProc, LRESULT, HWND, UINT, WPARAM, LPARAM)
-CALL(FWWndProc, LRESULT)
+_CALL(FWWndProc, LRESULT)
 #endif  /* !FUNCTION_WRAPPER_H_ */
