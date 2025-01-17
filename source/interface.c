@@ -358,7 +358,7 @@ int descriptor_comparator(const void* first, const void* second)
 {
     int32_t first_priority = ((const module_callback_descriptor_t *)first)->priority;
     int32_t second_priority  = ((const module_callback_descriptor_t *)second)->priority;
-    return first_priority  - second_priority ;
+    return first_priority  - second_priority;
 }
 
 int sort_module_callbacks(interface_impl_t* interface_impl)
