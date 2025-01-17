@@ -63,11 +63,9 @@ int fetch_D3D11_info(interface_impl_t* interface_impl, ID3D11Device** device_obj
 
 	// Call os_get_info, which gets us the necessary info
 	rvalue_t os_info_ds_map;
-	last_status = LOG_ON_ERR(interface_impl->intf.call_builtin_ex, interface_impl, &os_info_ds_map, "os_get_info", NULL, NULL, NULL, 0);
-
 	// This is not checking the return value of os_get_info,
 	// instead checking if we even called the function successfully.
-	if (last_status) return last_status;
+	CALL(interface_impl->intf.call_builtin_ex, interface_impl, &os_info_ds_map, "os_get_info", NULL, NULL, NULL, 0);
 
 	// Pull everything needed from the DS List
 	// We need to pass the pointer to the interface into the RValue initializer
@@ -77,20 +75,16 @@ int fetch_D3D11_info(interface_impl_t* interface_impl, ID3D11Device** device_obj
 	init_rvalue_str_interface(&arg, "video_d3d11_device", interface_impl);
 	rvalue_t args[2] = { os_info_ds_map, arg };
 	rvalue_t dx_device;
-	last_status = LOG_ON_ERR(interface_impl->intf.call_builtin_ex, interface_impl, &dx_device, "ds_map_find_value", NULL, NULL, args, 2);
-
 	// This is not checking the return value of ds_map_find_value,
 	// instead checking if we even called the function successfully.
-	if (last_status) return MSL_OBJECT_NOT_FOUND;
+	CALL_RETURN_ERROR(interface_impl->intf.call_builtin_ex, MSL_OBJECT_NOT_FOUND, interface_impl, &dx_device, "ds_map_find_value", NULL, NULL, args, 2);
 
 	init_rvalue_str_interface(&arg, "video_d3d11_swapchain", interface_impl);
 	args[1] = arg;
 	rvalue_t dx_swapchain;
-	last_status = LOG_ON_ERR(interface_impl->intf.call_builtin_ex, interface_impl, &dx_swapchain, "ds_map_find_value", NULL, NULL, args, 2);
-
 	// This is not checking the return value of ds_map_find_value,
 	// instead checking if we even called the function successfully.
-	if (last_status) return MSL_OBJECT_NOT_FOUND;
+	CALL_RETURN_ERROR(interface_impl->intf.call_builtin_ex, MSL_OBJECT_NOT_FOUND, interface_impl, &dx_swapchain, "ds_map_find_value", NULL, NULL, args, 2);
 
 	if (device_object)
 		*device_object = (ID3D11Device*)(dx_device.pointer);
@@ -195,10 +189,9 @@ int get_named_routine_pointer(interface_impl_t* interface_impl, const char* func
 
 	// Get the index for the function
 	int function_index = -1;
-	last_status = interface_impl->intf.get_named_routine_index(function_name, &function_index);
-
 	// Make sure we got one
-	if (last_status) return last_status;
+	CALL(interface_impl->intf.get_named_routine_index, function_name, &function_index);
+
 
 	// Values greater or equal to 100k are reserved for scripts.
 	// Values greater or equal to 500k are reserved for extension functions.
@@ -261,17 +254,14 @@ int call_builtin_ex(interface_impl_t* interface_impl, rvalue_t* result, const ch
 	}
 
 	// Query for the function pointer
-	last_status = interface_impl->intf.get_named_routine_pointer(function_name, (void*)function);
-
 	// Make sure we found a function
-	if (last_status) return last_status;
+	CALL(interface_impl->intf.get_named_routine_pointer, function_name, (void*)function);
 
 	// Previous check should've fired
 	RUNTIME_ASSERT(function != NULL);
 
 	// Cache the result
-	last_status = INSERT(str, TRoutine)(&interface_impl->builtin_function_cache, function_name, function);
-	if (last_status) return last_status;
+	CALL(INSERT(str, TRoutine), &interface_impl->builtin_function_cache, function_name, function);
 	
 	function(
 		result,
