@@ -6,7 +6,7 @@
 #include "../include/error.h"
 #include "../include/gml_structs.h"
 
-int iterator_create(const char* path, const char* pattern, directory_iterator_t** directory_iterator) 
+int iterator_create_alloc(const char* path, const char* pattern, directory_iterator_t** directory_iterator) 
 {
     int last_status = MSL_SUCCESS;
     directory_iterator_t* iter = NULL;
@@ -97,7 +97,7 @@ int iterator_next(directory_iterator_t* iter)
     }
 }
 
-int iterator_enter_directory(directory_iterator_t* iter) 
+int iterator_enter_directory_alloc(directory_iterator_t* iter) 
 {
     if (!(iter->find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ||
         strcmp(iter->find_data.cFileName, ".") == 0 ||
@@ -229,9 +229,8 @@ int has_parent_path(const char* path, bool* parent_path)
     return MSL_SUCCESS;
 }
 
-// Returns the parent path component. Caller must free the returned string.
-// Returns NULL if there is no parent path or on allocation failure.
-int parent_path(const char* path, char** parent)
+// Caller must free the returned string.
+int parent_path_alloc(const char* path, char** parent)
 {
     int last_status = MSL_SUCCESS;
     if (!path || !*path) 
@@ -391,7 +390,8 @@ int has_filename(const char* path, bool* filename)
     return MSL_SUCCESS;
 }
 
-int filename(const char* path, char** filename) 
+// Caller must free the returned string.
+int filename_alloc(const char* path, char** filename) 
 {
     int last_status = MSL_SUCCESS;
     bool flag;
@@ -436,6 +436,41 @@ int filename(const char* path, char** filename)
     result[fname_len] = '\0';
     *filename = result;
 
+    ret:
+    return last_status;
+}
+
+int has_extension(const char* path, bool* extension) 
+{
+    int last_status = MSL_SUCCESS;
+    bool flag;
+    CALL(has_filename, path, &flag);
+    if (!path || !flag)
+    {
+        *extension = false;
+        goto ret;
+    } 
+    
+    char* fname;
+    CALL(filename, path, fname);
+    if (!fname)
+    {
+        *extension = false;
+        goto ret;
+    }
+    
+    size_t len = strlen(fname);
+    // Look for last dot after last separator
+    for (size_t i = 0; i < len; i++) 
+    {
+        if (fname[i] == '.') 
+        {
+            *extension = (i < len - 1);  // Must have something after dot
+            break;
+        }
+    }
+    
+    free(fname);
     ret:
     return last_status;
 }

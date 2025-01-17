@@ -332,16 +332,16 @@ int SORT_VECTOR(T)(VECTOR(T)* vec, int(*comparator)(const void *, const void *))
 #define HASH_KEY_int hash_key_int
 #define HASH_KEY_int32_t hash_key_int
 
-int iterator_create(const char*, const char*, directory_iterator_t**);
+int iterator_create_alloc(const char*, const char*, directory_iterator_t**);
 int iterator_next(directory_iterator_t*);
-int iterator_enter_directory(directory_iterator_t*);
+int iterator_enter_directory_alloc(directory_iterator_t*);
 int iterator_destroy(directory_iterator_t*);
 int has_parent_path(const char*, bool*);
-int parent_path(const char*, char**);
+int parent_path_alloc(const char*, char**);
 int paths_are_equivalent(const char*, const char*, int*);
 int is_regular_file(const char*, bool*);
 int has_filename(const char*, bool*);
-int filename(const char*, char**);
+int filename_alloc(const char*, char**);
 hash_t hash_key_int(int);
 hash_t hash_key_ptr(void*);
 hash_t hash_key_str(const char*);
