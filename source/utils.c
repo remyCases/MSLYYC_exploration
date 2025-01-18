@@ -424,6 +424,7 @@ int filename_alloc(const char* path, char** filename)
     const char* fname_start = last_sep ? last_sep + 1 : path;
     size_t fname_len = &path[len] - fname_start;
     
+    // no need to free, the caller is responsible for the freeing
     char* result = (char*)malloc(fname_len + 1);
     if (!result) 
     {
@@ -444,20 +445,13 @@ int has_extension(const char* path, bool* extension)
 {
     int last_status = MSL_SUCCESS;
     bool flag;
+    *extension = false;
     CALL(has_filename, path, &flag);
-    if (!path || !flag)
-    {
-        *extension = false;
-        goto ret;
-    } 
+    if (!path || !flag) goto ret;
     
     char* fname;
-    CALL(filename, path, fname);
-    if (!fname)
-    {
-        *extension = false;
-        goto ret;
-    }
+    CALL_GOTO_ERROR(filename_alloc, cleanup, path, fname);
+    if (!fname) goto ret;
     
     size_t len = strlen(fname);
     // Look for last dot after last separator
@@ -470,9 +464,83 @@ int has_extension(const char* path, bool* extension)
         }
     }
     
+    cleanup:
     free(fname);
     ret:
     return last_status;
+}
+
+int extension(const char* path, char** ext_name) 
+{
+    int last_status = MSL_SUCCESS;
+    bool flag;
+    *ext_name = NULL;
+    CALL(has_extension, path, &flag);
+    if (!path || !flag) goto ret;
+    
+    char* fname;
+    CALL_GOTO_ERROR(filename_alloc, ret, path, fname);
+    if (!fname) goto ret;
+    
+    // Find last dot
+    char* last_dot = strrchr(fname, '.');
+    if (!last_dot || last_dot[1] == '\0') goto ret;
+    
+    char* result = strdup(last_dot);  // Includes the dot
+    *ext_name = result;
+    
+    ret:
+    if (fname) free(fname);
+    return last_status;
+}
+
+int compare(const char* path1, const char* path2, int* cmp) 
+{
+    if (!path1 || !path2) 
+    {
+        *cmp = -1;
+        return MSL_SUCCESS;
+    }
+    if (!*path1 && !*path2)
+    {
+        *cmp = 0;
+        return MSL_SUCCESS;
+    }
+    if (!*path1)
+    {
+        *cmp = -1;
+        return MSL_SUCCESS;
+    }
+    if (!*path2)
+    {
+        *cmp = 1;
+        return MSL_SUCCESS;
+    }
+    
+    // Get full paths
+    char full1[MAX_PATH];
+    char full2[MAX_PATH];
+    
+    if (!GetFullPathNameA(path1, MAX_PATH, full1, NULL) ||
+        !GetFullPathNameA(path2, MAX_PATH, full2, NULL)) 
+    {
+        *cmp = strcmp(path1, path2);  // Fallback to regular string compare
+        return MSL_SUCCESS;
+    }
+    
+    // Normalize separators to backslashes
+    for (char* p = full1; *p; p++) 
+    {
+        if (*p == '/') *p = '\\';
+    }
+    for (char* p = full2; *p; p++) 
+    {
+        if (*p == '/') *p = '\\';
+    }
+    
+    // Case-insensitive comparison for Windows
+    *cmp = stricmp(full1, full2);
+    return MSL_SUCCESS;
 }
 
 static int get_file_info(const char* path, BY_HANDLE_FILE_INFORMATION* result) 
