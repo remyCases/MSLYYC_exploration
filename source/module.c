@@ -5,6 +5,7 @@
 #include "../include/module.h"
 #include "../include/error.h"
 #include "../include/object.h"
+#include "../include/pe_parser.h"
 #include "Psapi.h"
 
 #ifdef WIN32
@@ -97,18 +98,18 @@ int mdp_map_image(const char* image_path, HMODULE* image_base)
     unsigned short self_arch = 0;
     
     // Query the target image architecture
-    CHECK_CALL(pp_query_image_architecture, image_path, target_arch);
+    CHECK_CALL(pp_query_image_architecture, image_path, &target_arch);
 
     // Query the current architecture
-    CHECK_CALL(pp_get_current_architecture, self_arch);
+    CHECK_CALL(pp_get_current_architecture, &self_arch);
 
     // Don't try to load modules which are the wrong architecture
     if (target_arch != self_arch) return MSL_INVALID_ARCH;
 
     // Make sure the image has the required exports
-    int framework_init;
-    int module_entry;
-    int module_preinit;
+    uintptr_t framework_init;
+    uintptr_t module_entry;
+    uintptr_t module_preinit;
 
     CHECK_CALL(pp_find_file_export_by_name, image_path, "__AurieFrameworkInit", &framework_init);
     CHECK_CALL(pp_find_file_export_by_name, image_path, "ModuleInitialize", &module_entry);

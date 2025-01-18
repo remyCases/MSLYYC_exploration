@@ -5,7 +5,7 @@
 #ifndef MODULE_H_
 #define MODULE_H_
 
-#include "../include/interface.h"
+#include "interface.h"
 
 int mdp_create_module(const char*, HMODULE, bool, uint8_t, module_t*);
 int mdp_is_module_marked_for_purge(module_t*, bool*);

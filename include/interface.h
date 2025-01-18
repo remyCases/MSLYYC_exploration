@@ -11,7 +11,6 @@
 #include "gml_structs.h"
 #include "tool.h"
 #include "utils.h"
-#include "callback.h"
 #include "runner_interface.h"
 #include "../safety_hook_wrapper/include/wrapper.h"
 
@@ -35,7 +34,7 @@ typedef struct base_object_s base_object_t;
 typedef struct interface_table_entry_s interface_table_entry_t;
 
 typedef int(*Entry)(module_t*,const char*);
-typedef int(*LoaderEntry)(module_t*, void*(*pp_get_framework_routine)(const char*), Entry, const char*, module_t*);	
+typedef int(*LoaderEntry)(module_t*, int(*pp_get_framework_routine)(const char*, void**), Entry, const char*, module_t*);	
 typedef int(*ModuleCallback)(module_t*, MODULE_OPERATION_TYPE, operation_info_t*);
 
 DEF_HASHMAP(str, TRoutine)
