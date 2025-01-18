@@ -543,6 +543,43 @@ int md_map_image_ex(const char* image_path, bool is_runtime_load, module_t* modu
     return last_status;
 }
 
+int md_is_image_runtime_loaded(module_t* module, bool* runtime_loaded)
+{
+    int last_status = MSL_SUCCESS;
+    *runtime_loaded = module->flags.is_runtime_loaded;
+    return last_status;
+}
+
+int md_is_image_initialized(module_t* module, bool* initialized)
+{
+    int last_status = MSL_SUCCESS;
+    *initialized = module->flags.is_initialized;
+    return last_status;
+}
+
+int md_map_folder(const char* folder_path, bool recursive)
+{
+    int last_status = MSL_SUCCESS;
+    if (access(folder_path, F_OK)) return MSL_FILE_NOT_FOUND;
+
+    CHECK_CALL(mdp_map_folder, folder_path, recursive, true, NULL);
+    return last_status;
+}
+
+int md_get_image_filename_alloc(module_t* module, char** filename)
+{
+    int last_status = MSL_SUCCESS;
+    bool flag;
+    char* image_path;
+    CHECK_CALL(mdp_get_image_path, module, &image_path);
+
+    CHECK_CALL(has_filename, image_path, &flag);
+    if (!flag) return MSL_INVALID_PARAMETER;
+
+    CHECK_CALL(filename_alloc, image_path, filename);
+    return last_status;
+}
+
 int md_is_image_preinitialized(module_t* module, bool* preinitialized)
 {
     int last_status = MSL_SUCCESS;
