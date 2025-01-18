@@ -45,6 +45,10 @@
     last_status = LOG_ON_ERR(F, __VA_ARGS__);   \
     if (last_status) return E;
 
+#define CALL_GOTO_ERROR(F, E, ...)            \
+    last_status = LOG_ON_ERR(F, __VA_ARGS__);   \
+    if (last_status) goto E;
+
 typedef enum ERROR_MLS_ {
     MACRO_ERROR(TO_ENUM)
 } ERROR_MLS;
