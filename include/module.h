@@ -12,7 +12,7 @@ int mdp_is_module_marked_for_purge(module_t*, bool*);
 int mdp_mark_module_for_purge(module_t*);
 int mdp_purge_marked_modules(void);
 int mdp_map_image(const char*, HMODULE*);
-int mdp_build_module_list(const char*, bool, bool(*predicate)(const char*), VECTOR(char)*);
+int mdp_build_module_list(const char*, bool, int(*predicate)(const char*, bool*), VECTOR(char)*);
 int mdp_add_module_to_list(module_t*);
 int mdp_query_module_information(HMODULE, void**, uint32_t*, void**);
 int mdp_get_image_path(module_t*, char**);
