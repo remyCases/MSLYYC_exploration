@@ -10,6 +10,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <Windows.h>
+#include <stdbool.h>
 #include "utils_macro.h"
 
 typedef struct directory_iterator_s directory_iterator_t;

@@ -238,10 +238,10 @@ int parent_path_alloc(const char* path, char** parent)
         last_status = MSL_INVALID_PARAMETER;
         goto cleanup;
     }
-    bool parent;
-    CHECK_CALL(has_parent_path, path, &parent);
+    bool parent_path;
+    CHECK_CALL(has_parent_path, path, &parent_path);
 
-    if (!parent) 
+    if (!parent_path) 
     {
         last_status = MSL_INVALID_PARAMETER;
         goto cleanup;
@@ -450,7 +450,7 @@ int has_extension(const char* path, bool* extension)
     if (!path || !flag) goto ret;
     
     char* fname;
-    CHECK_CALL_GOTO_ERROR(filename_alloc, cleanup, path, fname);
+    CHECK_CALL_GOTO_ERROR(filename_alloc, cleanup, path, &fname);
     if (!fname) goto ret;
     
     size_t len = strlen(fname);
@@ -465,7 +465,7 @@ int has_extension(const char* path, bool* extension)
     }
     
     cleanup:
-    free(fname);
+    if (fname) free(fname);
     ret:
     return last_status;
 }
@@ -479,7 +479,7 @@ int extension(const char* path, char** ext_name)
     if (!path || !flag) goto ret;
     
     char* fname;
-    CHECK_CALL_GOTO_ERROR(filename_alloc, ret, path, fname);
+    CHECK_CALL_GOTO_ERROR(filename_alloc, ret, path, &fname);
     if (!fname) goto ret;
     
     // Find last dot

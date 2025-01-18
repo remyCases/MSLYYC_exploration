@@ -44,7 +44,8 @@ int save_game(FWCodeEvent* code_event)
         CHECK_CALL(global_interface->call_builtin, "script_execute", args, 2, NULL);
     }
 
-    code_event->Call();
+    CHECK_CALL(code_event->Call);
+    return last_status;
 }
 
 int module_initialize(module_t* module, const char* module_path)
