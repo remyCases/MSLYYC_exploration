@@ -10,7 +10,7 @@
 
 #define RVA2VA(TYPE, BASE, RVA) (TYPE)((ULONG_PTR)BASE + RVA)
 
-int pe_load(char* file, char** buffer, size_t* buffer_size)
+int pe_load_alloc(char* file, char** buffer, size_t* buffer_size)
 {
     *buffer_size = -1;
     FILE *fp = fopen(file, "rb");
