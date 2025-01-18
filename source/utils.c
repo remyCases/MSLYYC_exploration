@@ -239,7 +239,7 @@ int parent_path_alloc(const char* path, char** parent)
         goto cleanup;
     }
     bool parent;
-    CALL(has_parent_path, path, &parent);
+    CHECK_CALL(has_parent_path, path, &parent);
 
     if (!parent) 
     {
@@ -395,7 +395,7 @@ int filename_alloc(const char* path, char** filename)
 {
     int last_status = MSL_SUCCESS;
     bool flag;
-    CALL(has_filename, path, &flag);
+    CHECK_CALL(has_filename, path, &flag);
     if (!path || !flag) 
     {
         last_status = MSL_SUCCESS;
@@ -446,11 +446,11 @@ int has_extension(const char* path, bool* extension)
     int last_status = MSL_SUCCESS;
     bool flag;
     *extension = false;
-    CALL(has_filename, path, &flag);
+    CHECK_CALL(has_filename, path, &flag);
     if (!path || !flag) goto ret;
     
     char* fname;
-    CALL_GOTO_ERROR(filename_alloc, cleanup, path, fname);
+    CHECK_CALL_GOTO_ERROR(filename_alloc, cleanup, path, fname);
     if (!fname) goto ret;
     
     size_t len = strlen(fname);
@@ -475,11 +475,11 @@ int extension(const char* path, char** ext_name)
     int last_status = MSL_SUCCESS;
     bool flag;
     *ext_name = NULL;
-    CALL(has_extension, path, &flag);
+    CHECK_CALL(has_extension, path, &flag);
     if (!path || !flag) goto ret;
     
     char* fname;
-    CALL_GOTO_ERROR(filename_alloc, ret, path, fname);
+    CHECK_CALL_GOTO_ERROR(filename_alloc, ret, path, fname);
     if (!fname) goto ret;
     
     // Find last dot
@@ -602,8 +602,8 @@ int paths_are_equivalent(const char* path1, const char* path2, int* equivalent)
     BY_HANDLE_FILE_INFORMATION info1;
     BY_HANDLE_FILE_INFORMATION info2;
     // Get file information for both paths
-    CALL(get_file_info, full_path1, &info1);
-    CALL(get_file_info, full_path2, &info2);
+    CHECK_CALL(get_file_info, full_path1, &info1);
+    CHECK_CALL(get_file_info, full_path2, &info2);
 
     // Compare volume serial numbers and file IDs
     if (info1.dwVolumeSerialNumber == info2.dwVolumeSerialNumber &&

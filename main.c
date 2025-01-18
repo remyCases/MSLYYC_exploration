@@ -31,17 +31,17 @@ int save_game(FWCodeEvent* code_event)
         rvalue_t arg_message = init_rvalue_str("You Save Game (Can I play, Daddy?)");
 
         rvalue_t args[2] = { arg_smoothSaveAuto };
-        CALL(global_interface->call_builtin, "asset_get_index", args, 1, &scr_smoothSaveAuto);
+        CHECK_CALL(global_interface->call_builtin, "asset_get_index", args, 1, &scr_smoothSaveAuto);
 
         args[0] = scr_smoothSaveAuto;
-        CALL(global_interface->call_builtin, "script_execute", args, 1, NULL);
+        CHECK_CALL(global_interface->call_builtin, "script_execute", args, 1, NULL);
 
         args[0] = arg_actionsLogUpdate;
-        CALL(global_interface->call_builtin, "asset_get_index", args, 1, &scr_actionsLogUpdate);
+        CHECK_CALL(global_interface->call_builtin, "asset_get_index", args, 1, &scr_actionsLogUpdate);
 
         args[0] = scr_actionsLogUpdate;
         args[1] = arg_message;
-        CALL(global_interface->call_builtin, "script_execute", args, 2, NULL);
+        CHECK_CALL(global_interface->call_builtin, "script_execute", args, 2, NULL);
     }
 
     code_event->Call();
@@ -51,10 +51,10 @@ int module_initialize(module_t* module, const char* module_path)
 {
     UNREFERENCED_PARAMETER(module_path);
     int last_status = MSL_SUCCESS;
-    CALL_RETURN_ERROR(ob_get_interface, MSL_MODULE_DEPENDENCY_NOT_RESOLVED, "YYTK_Main", (interface_base_t**)(&global_interface));
+    CHECK_CALL_CUSTOM_ERROR(ob_get_interface, MSL_MODULE_DEPENDENCY_NOT_RESOLVED, "YYTK_Main", (interface_base_t**)(&global_interface));
 
-    CALL(global_interface->print_warning, "Hello Mod");
-    CALL(global_interface->create_callback, module, EVENT_OBJECT_CALL, save_game, 0);
+    CHECK_CALL(global_interface->print_warning, "Hello Mod");
+    CHECK_CALL(global_interface->create_callback, module, EVENT_OBJECT_CALL, save_game, 0);
 
     return last_status;
 }
@@ -69,7 +69,7 @@ int main(int argc, char** argv)
     if (argc == 1) path = "data/StoneShard.exe";
     else path = argv[1];
  
-    CALL(module_initialize, &module, path);
+    CHECK_CALL(module_initialize, &module, path);
 
 	printf("[>] Execution complete\n");
     return 0;

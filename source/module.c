@@ -26,10 +26,10 @@ int mdp_create_module(const char* image_path, HMODULE image_module, bool process
 
     if (process_exports)
     {
-        CALL(mdp_process_image_exports, image_path, image_module, &temp_module);
+        CHECK_CALL(mdp_process_image_exports, image_path, image_module, &temp_module);
     }
 
-    CALL(mdp_query_module_information, image_module, &temp_module.image_base.pointer, &temp_module.image_size, &temp_module.image_entrypoint.pointer);
+    CHECK_CALL(mdp_query_module_information, image_module, &temp_module.image_base.pointer, &temp_module.image_size, &temp_module.image_entrypoint.pointer);
 
     *module = temp_module;
 
@@ -59,12 +59,12 @@ int mdp_purge_marked_modules(void)
     for(size_t i = 0; i < global_module_list.size; i++)
     {
         module = &global_module_list.arr[i];
-        CALL(mdp_is_module_marked_for_purge, module, &purge_flag);
+        CHECK_CALL(mdp_is_module_marked_for_purge, module, &purge_flag);
 
         if (purge_flag)
         {
             // Unmap the module, but don't call the unload routine, and don't remove it from the list
-            CALL(mdp_unmap_image, module, false, false);
+            CHECK_CALL(mdp_unmap_image, module, false, false);
         }
     }
 
@@ -74,7 +74,7 @@ int mdp_purge_marked_modules(void)
     for(size_t i = 0; i < global_module_list.size; i++)
     {
         module = &global_module_list.arr[i];
-        CALL(mdp_is_module_marked_for_purge, module, &purge_flag);
+        CHECK_CALL(mdp_is_module_marked_for_purge, module, &purge_flag);
 
         if (purge_flag)
         {
@@ -97,10 +97,10 @@ int mdp_map_image(const char* image_path, HMODULE* image_base)
     unsigned short self_arch = 0;
     
     // Query the target image architecture
-    CALL(pp_query_image_architecture, image_path, target_arch);
+    CHECK_CALL(pp_query_image_architecture, image_path, target_arch);
 
     // Query the current architecture
-    CALL(pp_get_current_architecture, self_arch);
+    CHECK_CALL(pp_get_current_architecture, self_arch);
 
     // Don't try to load modules which are the wrong architecture
     if (target_arch != self_arch) return MSL_INVALID_ARCH;
@@ -110,9 +110,9 @@ int mdp_map_image(const char* image_path, HMODULE* image_base)
     int module_entry;
     int module_preinit;
 
-    CALL(pp_find_file_export_by_name, image_path, "__AurieFrameworkInit", &framework_init);
-    CALL(pp_find_file_export_by_name, image_path, "ModuleInitialize", &module_entry);
-    CALL(pp_find_file_export_by_name, image_path, "ModulePreinitialize", &module_preinit);
+    CHECK_CALL(pp_find_file_export_by_name, image_path, "__AurieFrameworkInit", &framework_init);
+    CHECK_CALL(pp_find_file_export_by_name, image_path, "ModuleInitialize", &module_entry);
+    CHECK_CALL(pp_find_file_export_by_name, image_path, "ModulePreinitialize", &module_preinit);
 
     // If the image doesn't have a framework init function, we can't load it.
     if (framework_init) return MSL_INVALID_SIGNATURE;
@@ -122,7 +122,7 @@ int mdp_map_image(const char* image_path, HMODULE* image_base)
     if (!has_either_entry) return MSL_INVALID_SIGNATURE;
 
     module_t* potential_loaded_copy = NULL;
-    CALL(mdp_lookup_module_by_path, image_path, &potential_loaded_copy);
+    CHECK_CALL(mdp_lookup_module_by_path, image_path, &potential_loaded_copy);
     
     // If there's a module that's already loaded from the same path, deny loading it twice
     if (last_status == MSL_SUCCESS) return MSL_OBJECT_ALREADY_EXISTS;
@@ -143,7 +143,7 @@ int mdp_build_module_list(const char* base_folder, bool recursive, int(*predicat
     tmp_path[0] = 0;
 
     directory_iterator_t* iter = NULL;
-    CALL(iterator_create_alloc, base_folder, "*", &iter);
+    CHECK_CALL(iterator_create_alloc, base_folder, "*", &iter);
 
     bool flag;
     do
@@ -152,11 +152,11 @@ int mdp_build_module_list(const char* base_folder, bool recursive, int(*predicat
         tmp_path[MAX_PATH-1] = 0;
         strcat(tmp_path, iter->find_data.cFileName);
         tmp_path[MAX_PATH-1] = 0;
-        CALL(predicate, tmp_path, &flag);
+        CHECK_CALL(predicate, tmp_path, &flag);
 
         if (flag)
         {
-            CALL(ADD_VECTOR(char), files, tmp_path);
+            CHECK_CALL(ADD_VECTOR(char), files, tmp_path);
             
         }
 
@@ -169,14 +169,14 @@ int mdp_build_module_list(const char* base_folder, bool recursive, int(*predicat
         }
     } while (iterator_next(iter));
 
-    CALL(iterator_destroy, iter);
+    CHECK_CALL(iterator_destroy, iter);
     return last_status;
 }
 
 int mdp_add_module_to_list(module_t* module)
 {
     int last_status = MSL_SUCCESS;
-    CALL(ADD_VECTOR(module_t), &global_module_list, module);
+    CHECK_CALL(ADD_VECTOR(module_t), &global_module_list, module);
     return last_status;
 }
 
@@ -213,14 +213,14 @@ int mdp_get_image_folder_alloc(module_t* module, char** path)
 {
     int last_status = MSL_SUCCESS;
     char* module_path;
-    CALL(mdp_get_image_path, module, &module_path);
+    CHECK_CALL(mdp_get_image_path, module, &module_path);
 
     bool flag;
-    CALL(has_parent_path, module_path, &flag);
+    CHECK_CALL(has_parent_path, module_path, &flag);
     if (!flag) return MSL_INVALID_PARAMETER;
 
     // no need for an extra free since the task to free path is given to the caller
-    CALL(parent_path_alloc, module_path, path);
+    CHECK_CALL(parent_path_alloc, module_path, path);
     return last_status;
 }
 
@@ -252,7 +252,7 @@ int mdp_lookup_module_by_path(const char* module_path, module_t** module)
     int equivalent;
     for (size_t i = 0; i < global_module_list.size; i++)
     {
-        CALL(paths_are_equivalent, module_path, global_module_list.arr[i].image_path, &equivalent);
+        CHECK_CALL(paths_are_equivalent, module_path, global_module_list.arr[i].image_path, &equivalent);
 
         if (equivalent)
         {
@@ -275,16 +275,16 @@ int mdp_process_image_exports(const char* image_path, HMODULE image_base_address
     uintptr_t module_unload_offset;
 
     // We always need __AurieFrameworkInit to exist.
-    CALL(pp_find_file_export_by_name, image_path, "__AurieFrameworkInit", &framework_init_offset);
+    CHECK_CALL(pp_find_file_export_by_name, image_path, "__AurieFrameworkInit", &framework_init_offset);
     if (framework_init_offset) return MSL_FILE_PART_NOT_FOUND;
 
     // We also need either a ModuleInitialize or a ModulePreinitialize function.
-    CALL(pp_find_file_export_by_name, image_path, "ModuleInitialize", &module_init_offset);
-    CALL(pp_find_file_export_by_name, image_path, "ModulePreinitialize", &module_preload_offset);
+    CHECK_CALL(pp_find_file_export_by_name, image_path, "ModuleInitialize", &module_init_offset);
+    CHECK_CALL(pp_find_file_export_by_name, image_path, "ModulePreinitialize", &module_preload_offset);
     if (module_init_offset || module_preload_offset) return MSL_FILE_PART_NOT_FOUND;
 
-    CALL(pp_find_file_export_by_name, image_path, "ModuleOperationCallback", &module_callback_offset);
-    CALL(pp_find_file_export_by_name, image_path, "ModuleUnload", &module_unload_offset);
+    CHECK_CALL(pp_find_file_export_by_name, image_path, "ModuleOperationCallback", &module_callback_offset);
+    CHECK_CALL(pp_find_file_export_by_name, image_path, "ModuleUnload", &module_unload_offset);
 
     // Cast the problems away
     char* image_base = (char*)(image_base_address);
@@ -321,13 +321,13 @@ int mdp_unmap_image(module_t* module, bool remove_from_list, bool call_unload_ro
     // We don't have to do anything else, since SafetyHook will handle everything for us.
     // Truly a GOATed library, thank you @localcc for telling me about it love ya
     // C note: inline_hook_t and mid_hooks_t need a custom destructor to call the destructor from SafetyHook
-    CALL(CLEAR_VECTOR(inline_hook_t), &module->inline_hooks, destructor_inline_hook_t);
-    CALL(CLEAR_VECTOR(mid_hook_t), &module->mid_hooks, destructor_mid_hook_t);
+    CHECK_CALL(CLEAR_VECTOR(inline_hook_t), &module->inline_hooks, destructor_inline_hook_t);
+    CHECK_CALL(CLEAR_VECTOR(mid_hook_t), &module->mid_hooks, destructor_mid_hook_t);
 
     // Call the unload entry if needed
     if (call_unload_routine)
     {
-        CALL(mdp_dispatch_entry, module, module->module_unload);
+        CHECK_CALL(mdp_dispatch_entry, module, module->module_unload);
     }
 
     // Remove the module's operation callback
@@ -336,25 +336,25 @@ int mdp_unmap_image(module_t* module, bool remove_from_list, bool call_unload_ro
     // Destory all interfaces created by the module
     for (size_t i = 0; i < module->interface_table.size; i++)
     {
-        CALL(module->interface_table.arr[i].intf->destroy);
+        CHECK_CALL(module->interface_table.arr[i].intf->destroy);
     }
 
     // Wipe them off the interface table
     // Note these can't be freed, they're allocated by the owner module
     // C note: interface_table_entry_t has only ptr, so no need for a custom destructor here
-    CALL(CLEAR_VECTOR(interface_table_entry_t), &module->interface_table, NULL);
+    CHECK_CALL(CLEAR_VECTOR(interface_table_entry_t), &module->interface_table, NULL);
 
     memory_allocation_t* mem_alloc = NULL;
     // Free all memory allocated by the module (except persistent memory)
     for (size_t i = 0; i < module->memory_allocations.size; i++)
     {
         mem_alloc = &module->memory_allocations.arr[i];
-        CALL(mmp_free_memory, mem_alloc->owner_module, mem_alloc->allocation_base, false);
+        CHECK_CALL(mmp_free_memory, mem_alloc->owner_module, mem_alloc->allocation_base, false);
     }
 
     // Remove all the allocation entries, they're now invalid
     // C note: memory_allocation_t has only ptr, so no need for a custom destructor here
-    CALL(CLEAR_VECTOR(memory_allocation_t), &module->memory_allocations, NULL);
+    CHECK_CALL(CLEAR_VECTOR(memory_allocation_t), &module->memory_allocations, NULL);
 
     // Free the module
     FreeLibrary(module->image_base.hmodule);
@@ -362,7 +362,7 @@ int mdp_unmap_image(module_t* module, bool remove_from_list, bool call_unload_ro
     // Remove the module from our list if needed
     if (remove_from_list)
     {   
-        CALL(REMOVE_VECTOR(module_t), &global_module_list, module);
+        CHECK_CALL(REMOVE_VECTOR(module_t), &global_module_list, module);
     }
 
     return last_status;
@@ -374,13 +374,13 @@ int mdp_dispatch_entry(module_t* module, Entry entry)
     // Ignore dispatch attempts for the initial module
     if (module == global_initial_image) return MSL_SUCCESS;
 
-    CALL(obp_dispatch_module_operation_callbacks, module, entry, true);
+    CHECK_CALL(obp_dispatch_module_operation_callbacks, module, entry, true);
 
     char* path;
-    CALL(mdp_get_image_path, module, &path);
-    CALL(module->framework_initialize, global_initial_image, pp_get_framework_routine, entry, path, module);
+    CHECK_CALL(mdp_get_image_path, module, &path);
+    CHECK_CALL(module->framework_initialize, global_initial_image, pp_get_framework_routine, entry, path, module);
 
-    CALL(obp_dispatch_module_operation_callbacks, module, entry, false);
+    CHECK_CALL(obp_dispatch_module_operation_callbacks, module, entry, false);
     return last_status;
 }
 
@@ -389,14 +389,14 @@ static int predicate_build_module(const char* entry, bool* result)
     int last_status = MSL_SUCCESS;
     bool flag;
 
-    CALL(is_regular_file, entry, &flag);
+    CHECK_CALL(is_regular_file, entry, &flag);
     if (!flag) 
     {
         *result = false;
         return last_status;
     }
 
-    CALL(has_filename, entry, &flag);
+    CHECK_CALL(has_filename, entry, &flag);
     if (!flag)
     {
         *result = false;
@@ -406,8 +406,8 @@ static int predicate_build_module(const char* entry, bool* result)
     // if error, fname should be free before leaving
     // thus goto to handle that case
     char* fname;
-    CALL_GOTO_ERROR(filename_alloc, cleanup, entry, &fname);
-    CALL_GOTO_ERROR(has_extension, cleanup, fname, &flag);
+    CHECK_CALL_GOTO_ERROR(filename_alloc, cleanup, entry, &fname);
+    CHECK_CALL_GOTO_ERROR(has_extension, cleanup, fname, &flag);
     if (!flag)
     {
         *result = false;
@@ -415,9 +415,9 @@ static int predicate_build_module(const char* entry, bool* result)
     }
 
     char* ext_name;
-    CALL_GOTO_ERROR(extension, cleanup, fname, &ext_name);
+    CHECK_CALL_GOTO_ERROR(extension, cleanup, fname, &ext_name);
     int cmp;
-    CALL_GOTO_ERROR(compare, cleanup, ext_name, ".dll", &cmp);
+    CHECK_CALL_GOTO_ERROR(compare, cleanup, ext_name, ".dll", &cmp);
     if (cmp)
     {
         *result = false;
@@ -445,15 +445,15 @@ int mdp_map_folder(const char* folder, bool recursive, bool is_runtime_load, siz
     int last_status = MSL_SUCCESS;
     VECTOR(char) modules_to_map;
 
-    CALL(mdp_build_module_list, folder, recursive, predicate_build_module, &modules_to_map);
-    CALL(SORT_VECTOR(char), &modules_to_map, char_comparator);
+    CHECK_CALL(mdp_build_module_list, folder, recursive, predicate_build_module, &modules_to_map);
+    CHECK_CALL(SORT_VECTOR(char), &modules_to_map, char_comparator);
 
     size_t loaded_count = 0;
     bool loaded;
     module_t* loaded_module = NULL;
     for (size_t i = 0; i < modules_to_map.size; i++)
     {
-        CALL(md_map_image_ex, modules_to_map.arr[i], is_runtime_load, loaded_module, &loaded);
+        CHECK_CALL(md_map_image_ex, modules_to_map.arr[i], is_runtime_load, loaded_module, &loaded);
         if (loaded) loaded_count++;
     }
 
@@ -475,6 +475,6 @@ int md_unmap_image(module_t* module)
     int last_status = MSL_SUCCESS;
     if (module == global_initial_image) return MSL_ACCESS_DENIED;
 
-    CALL(mdp_unmap_image, module, true, true);
+    CHECK_CALL(mdp_unmap_image, module, true, true);
     return last_status;
 }

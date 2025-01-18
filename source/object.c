@@ -20,7 +20,7 @@ int obp_lookup_interface_owner(const char*, bool, module_t**, interface_table_en
 int ob_create_interface(module_t* module, interface_base_t* interface_base, const char* interface_name)
 {
     int last_status = MSL_SUCCESS;
-    CALL_RETURN_ERROR(ob_interface_exists, MSL_OBJECT_ALREADY_EXISTS, interface_name);
+    CHECK_CALL_CUSTOM_ERROR(ob_interface_exists, MSL_OBJECT_ALREADY_EXISTS, interface_name);
 
     interface_table_entry_t table_entry = {
         .intf = interface_base,
@@ -32,9 +32,9 @@ int ob_create_interface(module_t* module, interface_base_t* interface_base, cons
     // and that it succeeds at doing so. We don't want an
     // uninitialized, half-broken interface exposed!
 
-    CALL(interface_base->create);
+    CHECK_CALL(interface_base->create);
 
-    CALL(obp_add_interface_to_table, module, &table_entry);
+    CHECK_CALL(obp_add_interface_to_table, module, &table_entry);
     return last_status;
 }
 
@@ -46,7 +46,7 @@ int ob_interface_exists(const char* interface_name)
     
     // If we find a module containing the interface, that means the interface exists!
     // ObpLookupInterfaceOwner will return AURIE_INTERFACE_NOT_FOUND if it doesn't exist.
-    CALL(obp_lookup_interface_owner, interface_name, true, &containing_module, &table_entry);
+    CHECK_CALL(obp_lookup_interface_owner, interface_name, true, &containing_module, &table_entry);
     return last_status;
 }
 
@@ -56,8 +56,8 @@ int obp_destroy_interface_by_name(const char* interface_name)
     module_t* owner_module = NULL;
     interface_table_entry_t* table_entry = NULL;
 
-    CALL(obp_lookup_interface_owner, interface_name, true, &owner_module, &table_entry);
-    CALL(obp_destroy_interface, owner_module, table_entry->intf, true, true);
+    CHECK_CALL(obp_lookup_interface_owner, interface_name, true, &owner_module, &table_entry);
+    CHECK_CALL(obp_destroy_interface, owner_module, table_entry->intf, true, true);
     return last_status;
 }
 
@@ -68,12 +68,12 @@ int obp_lookup_interface_owner_export(const char* interface_name, const char* ex
     interface_table_entry_t* table_entry = NULL;
 
     // First, look up the interface owner AurieModule
-    CALL(obp_lookup_interface_owner, interface_name, true, &interface_owner, &table_entry);
+    CHECK_CALL(obp_lookup_interface_owner, interface_name, true, &interface_owner, &table_entry);
 
     // Now, get the module base address
     void* module_base_address = NULL;
     // Module has no base address?
-    CALL_RETURN_ERROR(mdp_get_module_base_address, MSL_FILE_PART_NOT_FOUND, interface_owner, module_base_address);
+    CHECK_CALL_CUSTOM_ERROR(mdp_get_module_base_address, MSL_FILE_PART_NOT_FOUND, interface_owner, module_base_address);
 
     // Get the thing
     void* procedure_address = GetProcAddress((HMODULE)(module_base_address), export_name);
@@ -115,7 +115,7 @@ int obp_dispatch_module_operation_callbacks(module_t* affected_module, Entry rou
         current_operation_type = OPERATION_UNLOAD;
     
     operation_info_t operation_information;
-    CALL(obp_create_operation_info, affected_module, is_future_call, &operation_information);
+    CHECK_CALL(obp_create_operation_info, affected_module, is_future_call, &operation_information);
 
     module_t* loaded_module;
     for (size_t i = 0; i < global_module_list.size; i++)
@@ -123,7 +123,7 @@ int obp_dispatch_module_operation_callbacks(module_t* affected_module, Entry rou
         loaded_module = &global_module_list.arr[i];
         if (!loaded_module->module_operation_callback) continue;
 
-        CALL(loaded_module->module_operation_callback, affected_module, current_operation_type, &operation_information);
+        CHECK_CALL(loaded_module->module_operation_callback, affected_module, current_operation_type, &operation_information);
     }
     return last_status;
 }
@@ -131,7 +131,7 @@ int obp_dispatch_module_operation_callbacks(module_t* affected_module, Entry rou
 int obp_add_interface_to_table(module_t* module, interface_table_entry_t* entry)
 {
     int last_status = MSL_SUCCESS;
-    CALL(ADD_VECTOR(interface_table_entry_t), &module->interface_table, entry);
+    CHECK_CALL(ADD_VECTOR(interface_table_entry_t), &module->interface_table, entry);
     return last_status;
 }
 
@@ -139,7 +139,7 @@ int obp_create_operation_info(module_t* module, bool is_future_call, operation_i
 {
     int last_status = MSL_SUCCESS;
     operation_information->is_future_call = is_future_call;
-    CALL(mdp_get_module_base_address, module, &operation_information->module_base_address);
+    CHECK_CALL(mdp_get_module_base_address, module, &operation_information->module_base_address);
     return last_status;
 }
 
@@ -148,7 +148,7 @@ int obp_destroy_interface(module_t* module, interface_base_t* interface_base, bo
     int last_status = MSL_SUCCESS;
     if (notify)
     {
-        CALL(interface_base->destroy);
+        CHECK_CALL(interface_base->destroy);
     }
 
     if (remove_from_list)
@@ -207,7 +207,7 @@ int ob_get_interface(const char* interface_name, interface_base_t** interface_ba
     module_t* owner_module = NULL;
     interface_table_entry_t* interface_entry = NULL;
 
-    CALL(obp_lookup_interface_owner, interface_name, true, &owner_module, &interface_entry);
+    CHECK_CALL(obp_lookup_interface_owner, interface_name, true, &owner_module, &interface_entry);
 
     *interface_base = interface_entry->intf;
     return last_status;
@@ -219,10 +219,10 @@ int ob_destroy_interface(module_t* module, const char* interface_name)
     module_t* owner_module = NULL;
     interface_table_entry_t* table_entry = NULL;
 
-    CALL(obp_lookup_interface_owner, interface_name, true, &owner_module, &table_entry);
+    CHECK_CALL(obp_lookup_interface_owner, interface_name, true, &owner_module, &table_entry);
 
     if (owner_module != module) return MSL_ACCESS_DENIED;
 
-    CALL(obp_destroy_interface, module, table_entry->intf, true, true);
+    CHECK_CALL(obp_destroy_interface, module, table_entry->intf, true, true);
     return last_status;
 }

@@ -99,7 +99,7 @@ int ppi_get_module_section_bounds(void* image, const char* section_name, uint64_
 
     PIMAGE_NT_HEADERS nt_header = NULL;
     // NT Header query failed, not a valid image?
-    CALL(ppi_get_nt_header, image, (void*)(nt_header));
+    CHECK_CALL(ppi_get_nt_header, image, (void*)(nt_header));
 
     PIMAGE_SECTION_HEADER first_section = (PIMAGE_SECTION_HEADER)(nt_header + 1);
 
