@@ -22,7 +22,7 @@ int mdp_create_module(const char* image_path, HMODULE image_module, bool process
 
     // Populate known fields first
     temp_module.flags.bitfield = bit_flags;
-    temp_module.image_path = image_path;
+    temp_module.image_path = (char*)image_path;
 
     if (process_exports)
     {
@@ -135,12 +135,13 @@ int mdp_map_image(const char* image_path, HMODULE* image_base)
     return MSL_SUCCESS;
 }
 
-int mdp_build_module_list(const char* base_folder, bool recursive, int(*predicate)(const char*, bool*), VECTOR(char)* files)
+int mdp_build_module_list(const char* base_folder, bool recursive, int(*predicate)(const char*, bool*), VECTOR(str)* files)
 {
     int last_status = MSL_SUCCESS;
     files->size= 0;
     char tmp_path[MAX_PATH];
     tmp_path[0] = 0;
+    const char* pointer_tmp = &tmp_path[0];
 
     directory_iterator_t* iter = NULL;
     CHECK_CALL(iterator_create_alloc, base_folder, "*", &iter);
@@ -156,8 +157,9 @@ int mdp_build_module_list(const char* base_folder, bool recursive, int(*predicat
 
         if (flag)
         {
-            CHECK_CALL(ADD_VECTOR(char), files, tmp_path);
-            
+            // cant call &tmp_path, since it will have the type char(*)[MAX_PATH], note the char** type
+            // remember arrays are not pointers
+            CHECK_CALL(ADD_VECTOR(str), files, &pointer_tmp);
         }
 
         if (iter->find_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) 
@@ -433,20 +435,28 @@ static int predicate_build_module(const char* entry, bool* result)
     goto ret;
 }
 
-static int char_comparator(const void* first, const void* second) 
+static int str_comparator(const void* first, const void* second) 
 {
-    char first_char = *(const char*)first;
-    char second_char  = *(const char*)second;
-    return first_char  - second_char;
+    int first_hash = 0;
+    int second_hash = 0;
+    for (char* p = (char*)first;*p;p++)
+    {
+        first_hash += *p;
+    }
+    for (char* q = (char*)second;*q;q++)
+    {
+        first_hash += *q;
+    }
+    return first_hash  - second_hash;
 }
 
 int mdp_map_folder(const char* folder, bool recursive, bool is_runtime_load, size_t* number_of_mapped_modules)
 {
     int last_status = MSL_SUCCESS;
-    VECTOR(char) modules_to_map;
+    VECTOR(str) modules_to_map;
 
     CHECK_CALL(mdp_build_module_list, folder, recursive, predicate_build_module, &modules_to_map);
-    CHECK_CALL(SORT_VECTOR(char), &modules_to_map, char_comparator);
+    CHECK_CALL(SORT_VECTOR(str), &modules_to_map, str_comparator);
 
     size_t loaded_count = 0;
     bool loaded;
@@ -460,6 +470,76 @@ int mdp_map_folder(const char* folder, bool recursive, bool is_runtime_load, siz
     if (number_of_mapped_modules)
         *number_of_mapped_modules = loaded_count;
 
+    return last_status;
+}
+
+int md_map_image(const char* image_path, module_t* module)
+{
+    int last_status = MSL_SUCCESS;
+    bool loaded;
+    CHECK_CALL(md_map_image_ex, image_path, true, module, &loaded);
+    return last_status;
+}
+
+int md_map_image_ex(const char* image_path, bool is_runtime_load, module_t* module, bool* loaded)
+{
+    int last_status = MSL_SUCCESS;
+    *loaded = false;
+    HMODULE image_base = NULL;
+
+    // Map the image
+    CHECK_CALL(mdp_map_image, image_path, &image_base);
+
+    // Create the module object
+    module_t module_object;
+    CHECK_CALL(mdp_create_module, image_path, image_base, true, 0, &module_object);
+
+    // Verify image integrity
+    CHECK_CALL(mmp_verify_callback, module_object.image_base.hmodule, module_object.framework_initialize);
+
+    module_object.flags.is_runtime_loaded = is_runtime_load;
+
+    // Add the module to the module list before running module code
+    // No longer safe to access module_object
+    CHECK_CALL(mdp_add_module_to_list, &module_object);
+    *module = module_object;
+
+    // If we're loaded at runtime, we have to call the module methods manually
+    if (is_runtime_load)
+    {
+        // Dispatch Module Preinitialize to not break modules that depend on it (eg. YYTK)
+        CHECK_CALL_GOTO_ERROR(mdp_dispatch_entry, cleanup, module, module->module_preinitialize);
+        module->flags.is_preloaded = true;
+
+        // Check the environment we are in. This is to detect plugins loaded by other plugins
+        // from their ModulePreinitialize routines. In such cases, we don't want
+        // to call the loaded plugin's ModuleInitialize, as the process isn't yet
+        // initialized.
+        bool are_we_within_early_launch = false;
+        CHECK_CALL(el_is_process_suspended, are_we_within_early_launch);
+
+        // If we're within early launch, ModuleInitialize should not be called.
+        // Instead, it will be called in ArProcessAttach when the module initializes.
+        if (are_we_within_early_launch)
+        {
+            *loaded = true;
+            return MSL_SUCCESS;
+        }
+
+        // Dispatch Module Initialize
+        CHECK_CALL_GOTO_ERROR(mdp_dispatch_entry, cleanup, module, module->module_initialize);
+        CHECK_CALL(mdp_purge_marked_modules);
+        module->flags.is_initialized = true;
+
+        // Module is now fully initialized
+    }	
+    *loaded = true;
+    return MSL_SUCCESS;
+
+    cleanup:
+    // Remove module if Preinitialize failed or Initialize failed
+    CHECK_CALL(mdp_mark_module_for_purge, module); 
+    CHECK_CALL(mdp_purge_marked_modules);
     return last_status;
 }
 
