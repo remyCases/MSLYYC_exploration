@@ -5,7 +5,6 @@
 #ifndef OBJECT_H_
 #define OBJECT_H_
 
-#include "error.h"
 #include "interface.h"
 
 int ob_create_interface(module_t*, interface_base_t*, const char*);
@@ -21,4 +20,5 @@ int obp_destroy_interface(module_t*, interface_base_t*, bool, bool);
 int obp_lookup_interface_owner(const char*, bool, module_t**, interface_table_entry_t**);
 int ob_get_interface(const char*, interface_base_t**);
 int ob_destroy_interface(module_t*, const char*);
+
 #endif  /* !OBJECT_H_ */

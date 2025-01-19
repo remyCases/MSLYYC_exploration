@@ -31,4 +31,5 @@ int md_map_folder(const char*, bool);
 int md_get_image_filename_alloc(module_t*, char**);
 int md_is_image_preinitialized(module_t*, bool*);
 int md_unmap_image(module_t*);
+
 #endif  /* !MODULE_H_ */

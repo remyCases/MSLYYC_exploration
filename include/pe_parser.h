@@ -5,7 +5,6 @@
 #ifndef PE_PARSER_H_
 #define PE_PARSER_H_
 
-#include <stddef.h>
 #include "interface.h"
 
 int pp_query_image_architecture(const char*, unsigned short*);
@@ -22,4 +21,5 @@ int ppi_get_export_offset(void*, const char*, uintptr_t*);
 int ppi_rva_to_file_offset(PIMAGE_NT_HEADERS, uint32_t, uint32_t*);
 int ppi_rva_to_file_offset64(PIMAGE_NT_HEADERS64, uint32_t, uint32_t*);
 int ppi_rva_to_file_offset32(PIMAGE_NT_HEADERS32, uint32_t, uint32_t*);
+
 #endif  /* !PE_PARSER_H_ */

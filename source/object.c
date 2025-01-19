@@ -2,6 +2,7 @@
 // See LICENSE file for extended copyright information.
 // This file is part of MSLYYC_exploration project from https://github.com/remyCases/MSLYYC_exploration.
 
+#include "../include/error.h"
 #include "../include/object.h"
 #include "../include/interface.h"
 #include "../include/module.h"
