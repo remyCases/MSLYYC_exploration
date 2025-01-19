@@ -19,12 +19,12 @@ FUNC_VEC(mid_hook_t)
 
 void destructor_inline_hook_t(inline_hook_t* inline_hook)
 {
-	safety_hook_inline_destroy(inline_hook->hook_instance);
+	shi_destroy(inline_hook->hook_instance);
 }
 
 void destructor_mid_hook_t(mid_hook_t* mid_hook)
 {
-	safety_hook_mid_destroy(mid_hook->hook_instance);
+	shm_destroy(mid_hook->hook_instance);
 }
 
 int extract_function_entry(interface_impl_t* interface_impl, size_t index, const char** function_name, TRoutine* function_routine, int32_t* argument_count)

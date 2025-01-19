@@ -21,6 +21,11 @@ typedef enum EVENT_TRIGGERS EVENT_TRIGGERS;
 typedef enum CM_COLOR CM_COLOR;
 typedef enum MODULE_OPERATION_TYPE MODULE_OPERATION_TYPE;
 
+typedef union xmm_register xmm_register;
+typedef struct sse_context32_s sse_context32_t;
+typedef struct sse_context64_s sse_context64_t;
+typedef struct processor_context64_s processor_context64_t;
+typedef struct processor_context32_s processor_context32_t;
 typedef struct module_callback_descriptor_s module_callback_descriptor_t;
 typedef struct operation_info_s operation_info_t;
 typedef struct inline_hook_s inline_hook_t;
@@ -36,6 +41,11 @@ typedef struct interface_table_entry_s interface_table_entry_t;
 typedef int(*Entry)(module_t*,const char*);
 typedef int(*LoaderEntry)(module_t*, int(*pp_get_framework_routine)(const char*, void**), Entry, const char*, module_t*);	
 typedef int(*ModuleCallback)(module_t*, MODULE_OPERATION_TYPE, operation_info_t*);
+#if _WIN64
+	typedef void(*MidHookFunction)(processor_context64_t*);
+#else
+	typedef void(*MidHookFunction)(processor_context32_t*);
+#endif // _WIN64
 
 DEF_HASHMAP(str, TRoutine)
 DEF_FUNC_HASH(str, TRoutine)
@@ -109,6 +119,103 @@ enum CM_COLOR
     CM_LIGHTYELLOW,
     CM_BRIGHTWHITE
 };
+
+union xmm_register 
+{
+    uint8_t UInt8[16];
+    uint16_t UInt16[8];
+    uint32_t UInt32[4];
+    uint64_t UInt64[2];
+    float FP32[4];
+    double FP64[2];
+};
+
+struct sse_context32_s
+{
+    xmm_register Xmm0;
+    xmm_register Xmm1;
+    xmm_register Xmm2;
+    xmm_register Xmm3;
+    xmm_register Xmm4;
+    xmm_register Xmm5;
+    xmm_register Xmm6;
+    xmm_register Xmm7;
+};
+
+struct sse_context64_s
+{
+    xmm_register Xmm0;
+    xmm_register Xmm1;
+    xmm_register Xmm2;
+    xmm_register Xmm3;
+    xmm_register Xmm4;
+    xmm_register Xmm5;
+    xmm_register Xmm6;
+    xmm_register Xmm7;
+    xmm_register Xmm8;
+    xmm_register Xmm9;
+    xmm_register Xmm10;
+    xmm_register Xmm11;
+    xmm_register Xmm12;
+    xmm_register Xmm13;
+    xmm_register Xmm14;
+    xmm_register Xmm15;
+};
+// In a hook: 
+// - RIP points to a trampoline containing the replaced instructions.
+// - RSP is read-only, modifications to it are ignored.
+// - The top of TrampolineRSP contains the resume address.
+// - TrampolineRSP can be modified so long as the previous requirement is met.
+struct processor_context64_s
+{
+    sse_context64_t SSE;
+    uint64_t RFlags;
+    uint64_t R15;
+    uint64_t R14;
+    uint64_t R13;
+    uint64_t R12;
+    uint64_t R11;
+    uint64_t R10;
+    uint64_t R9;
+    uint64_t R8;
+    uint64_t RDI;
+    uint64_t RSI;
+    uint64_t RDX;
+    uint64_t RCX;
+    uint64_t RBX;
+    uint64_t RAX;
+    uint64_t RBP;
+    uint64_t RSP;
+    uint64_t TrampolineRSP;
+    uint64_t RIP;
+};
+
+// In a hook: 
+// - EIP points to a trampoline containing the replaced instructions.
+// - ESP is read-only, modifications to it are ignored.
+// - The top of TrampolineESP contains the resume address.
+// - TrampolineESP can be modified so long as the previous requirement is met.
+struct processor_context32_s
+{
+    sse_context32_t SSE;
+    uint32_t EFlags;
+    uint32_t EDI;
+    uint32_t ESI;
+    uint32_t EDX;
+    uint32_t ECX;
+    uint32_t EBX;
+    uint32_t EAX;
+    uint32_t EBP;
+    uint32_t ESP;
+    uint32_t TrampolineESP;
+    uint32_t EIP;
+};
+
+#ifdef _WIN64
+	typedef processor_context64_t processor_context_t;
+#else
+	typedef processor_context32_t processor_context_t;
+#endif // _WIN32
 
 struct module_callback_descriptor_s
 {

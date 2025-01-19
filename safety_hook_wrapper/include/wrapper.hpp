@@ -13,7 +13,7 @@ public:
     ~WrapperSafetyHookInline();
     
     // Add methods that mirror your C++ library functionality
-    int someOperation(int value);
+    void* get_original_pvoid(void);
     
 private:
     SafetyHookInline* safety_hook_inline_instance;

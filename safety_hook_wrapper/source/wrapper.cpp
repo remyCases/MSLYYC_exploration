@@ -12,6 +12,10 @@ WrapperSafetyHookInline::~WrapperSafetyHookInline() {
     delete safety_hook_inline_instance;
 }
 
+void* WrapperSafetyHookInline::get_original_pvoid() {
+    return this->safety_hook_inline_instance->original<void*>();
+}
+
 WrapperSafetyHookMid::WrapperSafetyHookMid(void* target, safetyhook::MidHookFn destination, SafetyHookMid::Flags flags) {
     *safety_hook_mid_instance = safetyhook::create_mid(target, destination, flags);
 }

@@ -11,15 +11,15 @@ extern "C" {
 
 typedef struct WrapperSafetyHookInline* safety_hook_inline_t;
 
-safety_hook_inline_t safety_hook_inline_create(void* target, void* destination, int flags);
-void safety_hook_inline_destroy(safety_hook_inline_t handle);
-int safety_hook_inline_some_operation(safety_hook_inline_t handle, int value);
+safety_hook_inline_t shi_create(void* target, void* destination, int flags);
+void shi_destroy(safety_hook_inline_t handle);
+void* shi_get_original_pvoid(safety_hook_inline_t handle);
 
 typedef struct WrapperSafetyHookMid* safety_hook_mid_t;
 
-safety_hook_mid_t safety_hook_mid_create(void* target, void* destination, int flags);
-void safety_hook_mid_destroy(safety_hook_mid_t handle);
-int safety_hook_mid_some_operation(safety_hook_mid_t handle, int value);
+safety_hook_mid_t shm_create(void* target, void* destination, int flags);
+void shm_destroy(safety_hook_mid_t handle);
+int shm_some_operation(safety_hook_mid_t handle, int value);
 
 #ifdef __cplusplus
 }
