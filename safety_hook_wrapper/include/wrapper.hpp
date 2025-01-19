@@ -10,7 +10,8 @@
 class WrapperSafetyHookInline {
 public:
     WrapperSafetyHookInline(void);
-    WrapperSafetyHookInline(void*, void*, SafetyHookInline::Flags flags = SafetyHookInline::Default);
+    WrapperSafetyHookInline(void*, void*);
+    WrapperSafetyHookInline(void*, void*, SafetyHookInline::Flags);
     ~WrapperSafetyHookInline();
     
     // Add methods that mirror your C++ library functionality
@@ -23,7 +24,8 @@ private:
 class WrapperSafetyHookMid {
 public:
     WrapperSafetyHookMid(void);
-    WrapperSafetyHookMid(void*, safetyhook::MidHookFn, SafetyHookMid::Flags flags = SafetyHookMid::Default);
+    WrapperSafetyHookMid(void*, safetyhook::MidHookFn);
+    WrapperSafetyHookMid(void*, safetyhook::MidHookFn, SafetyHookMid::Flags);
     ~WrapperSafetyHookMid();
     
     // Add methods that mirror your C++ library functionality

@@ -6,6 +6,7 @@
 #include "../include/error.h"
 #include "../include/object.h"
 #include "../include/pe_parser.h"
+#include "../include/memory_management.h"
 #include "Psapi.h"
 
 #ifdef WIN32

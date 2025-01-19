@@ -8,6 +8,10 @@ WrapperSafetyHookInline::WrapperSafetyHookInline(void) {
     safety_hook_inline_instance = {};
 }
 
+WrapperSafetyHookInline::WrapperSafetyHookInline(void* target, void* destination) {
+    *safety_hook_inline_instance = safetyhook::create_inline(target, destination, SafetyHookInline::Default);
+}
+
 WrapperSafetyHookInline::WrapperSafetyHookInline(void* target, void* destination, SafetyHookInline::Flags flags) {
     *safety_hook_inline_instance = safetyhook::create_inline(target, destination, flags);
 }
@@ -22,6 +26,10 @@ void* WrapperSafetyHookInline::get_original_pvoid() {
 
 WrapperSafetyHookMid::WrapperSafetyHookMid(void) {
     safety_hook_mid_instance = {};
+}
+
+WrapperSafetyHookMid::WrapperSafetyHookMid(void* target, safetyhook::MidHookFn destination) {
+    *safety_hook_mid_instance = safetyhook::create_mid(target, destination, SafetyHookMid::Default);
 }
 
 WrapperSafetyHookMid::WrapperSafetyHookMid(void* target, safetyhook::MidHookFn destination, SafetyHookMid::Flags flags) {

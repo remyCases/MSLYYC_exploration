@@ -3,6 +3,7 @@
 // This file is part of MSLYYC_exploration project from https://github.com/remyCases/MSLYYC_exploration.
 
 #include "Windows.h"
+#include "TlHelp32.h"
 #include <stdint.h>
 #include "inttypes.h"
 #include "../include/memory_management.h"
@@ -90,7 +91,7 @@ int mm_create_hook(module_t* module, char* hook_identifier, void* source_functio
     CHECK_CALL(mmp_freeze_current_process);
 
     // Creates and enables the actual hook
-    inline_hook_t* created_hook;
+    inline_hook_t* created_hook = NULL;
     CHECK_CALL(mmp_create_inline_hook, module, hook_identifier, source_function, destination_function, &created_hook);
 
     if (!created_hook)
@@ -173,7 +174,7 @@ int mm_create_mid_function_hook(module_t* module, char* hook_identifier, void* s
     CHECK_CALL(mmp_freeze_current_process);
 
     // Creates and enables the actual hook
-    mid_hook_t* created_hook;
+    mid_hook_t* created_hook = NULL;
     CHECK_CALL(mmp_create_mid_hook, module, hook_identifier, source_address, target_handler, &created_hook);
 
     CHECK_CALL(mmp_resume_current_process);
@@ -339,7 +340,7 @@ int mmp_remove_hook(module_t* module, char* hook_identifier, bool remove_from_ta
 
     // Try to look it up in the inline hook table
     inline_hook_t* inline_hook_object = NULL;
-    CHECK_CALL(mmp_lookup_inline_hook_by_name, module, hook_identifier, inline_hook_object);
+    CHECK_CALL(mmp_lookup_inline_hook_by_name, module, hook_identifier, &inline_hook_object);
 
     // If we found it, we can remove it
     if (inline_hook_object != NULL)
@@ -350,7 +351,7 @@ int mmp_remove_hook(module_t* module, char* hook_identifier, bool remove_from_ta
 
     // We know it's not an inline hook, so try searching for a midhook
     mid_hook_t* mid_hook_object = NULL;
-    CHECK_CALL(mmp_lookup_inline_hook_by_name, module, hook_identifier, mid_hook_object);
+    CHECK_CALL(mmp_lookup_mid_hook_by_name, module, hook_identifier, &mid_hook_object);
 
     // If we found it, remove it
     if (mid_hook_object != NULL)
@@ -400,5 +401,114 @@ int mmp_remove_mid_hook_from_table(module_t* module, mid_hook_t* hook)
 {
     int last_status = MSL_SUCCESS;
     CHECK_CALL(REMOVE_VECTOR_IF(mid_hook_t), &module->mid_hooks, predicate_mid, hook, destructor_mid);
+    return last_status;
+}
+
+int mmp_lookup_inline_hook_by_name(module_t* module, char* hook_identifier, inline_hook_t** hook)
+{
+    inline_hook_t* inline_hook = NULL;
+    for (size_t i = 0; i < module->inline_hooks.size; i++)
+    {
+        inline_hook = &module->inline_hooks.arr[i];
+        if (!strcmp(inline_hook->identifier, hook_identifier))
+        {
+            *hook = inline_hook;
+            return MSL_SUCCESS;
+        }
+    }
+    return MSL_OBJECT_NOT_FOUND;
+}
+
+int mmp_lookup_mid_hook_by_name(module_t* module, char* hook_identifier, mid_hook_t** hook)
+{
+    mid_hook_t* mid_hook = NULL;
+    for (size_t i = 0; i < module->mid_hooks.size; i++)
+    {
+        mid_hook = &module->mid_hooks.arr[i];
+        if (!strcmp(mid_hook->identifier, hook_identifier))
+        {
+            *hook = mid_hook;
+            return MSL_SUCCESS;
+        }
+    }
+    return MSL_OBJECT_NOT_FOUND;
+}
+
+int mmp_create_inline_hook(module_t* module, char* hook_identifier, void* source_function, void* destination_function, inline_hook_t** hook)
+{
+    int last_status = MSL_SUCCESS;
+    // Create the hook object
+    (*hook)->owner = module;
+    (*hook)->identifier = hook_identifier;
+    (*hook)->hook_instance = shi_create_default_flag(source_function, destination_function);
+
+    // Add the hook to the table
+    CHECK_CALL(mmp_add_inline_hook_to_table, module, *hook);
+    return last_status;
+}
+
+int mmp_create_mid_hook(module_t* module, char* hook_identifier, void* source_function, void* destination_function, mid_hook_t** hook)
+{
+    int last_status = MSL_SUCCESS;
+    // Create the hook object
+    (*hook)->owner = module;
+    (*hook)->identifier = hook_identifier;
+    (*hook)->hook_instance = shm_create_default_flag(source_function, destination_function);
+
+    // Add the hook to the table
+    CHECK_CALL(mmp_add_mid_hook_to_table, module, *hook);
+    return last_status;
+}
+
+static int callback_freeze(const THREADENTRY32* entry, bool* flag)
+{
+    *flag = false;
+    // Skip my thread
+    if (GetCurrentThreadId() == entry->th32ThreadID) return MSL_SUCCESS;
+
+    // Skip everything that's not my process
+    if (GetCurrentProcessId() != entry->th32OwnerProcessID) return MSL_SUCCESS;
+
+    HANDLE thread = OpenThread(THREAD_SUSPEND_RESUME, false, entry->th32ThreadID);
+
+    if (!thread) return MSL_SUCCESS;
+
+    SuspendThread(thread);
+    CloseHandle(thread);
+
+     return MSL_SUCCESS;
+}
+
+int mmp_freeze_current_process(void)
+{
+    int last_status = MSL_SUCCESS;
+    CHECK_CALL(el_for_each_thread, callback_freeze);
+    return last_status;
+}
+
+static int callback_resume(const THREADENTRY32* entry, bool* flag)
+{
+    *flag = false;
+    // Skip my thread
+    if (GetCurrentThreadId() == entry->th32ThreadID) return MSL_SUCCESS;
+
+    // Skip everything that's not my process
+    if (GetCurrentProcessId() != entry->th32OwnerProcessID) return MSL_SUCCESS;
+
+    HANDLE thread = OpenThread(THREAD_SUSPEND_RESUME, false, entry->th32ThreadID);
+
+    if (!thread) return MSL_SUCCESS;
+
+    ResumeThread(thread);
+    CloseHandle(thread);
+
+     return MSL_SUCCESS;
+}
+
+
+int mmp_resume_current_process(void)
+{
+    int last_status = MSL_SUCCESS;
+    CHECK_CALL(el_for_each_thread, callback_resume);
     return last_status;
 }

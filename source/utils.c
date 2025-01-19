@@ -22,6 +22,8 @@ int iterator_create_alloc(const char* path, const char* pattern, directory_itera
         last_status = MSL_ALLOCATION_ERROR;
         goto cleanup;
     }
+    iter->pattern = NULL;
+    iter->current_path = NULL;
 
     size_t path_len = strlen(path);
     iter->current_path = (char*)malloc(MAX_PATH);
@@ -248,7 +250,8 @@ int parent_path_alloc(const char* path, char** parent)
     }
 
     size_t len = strlen(path);
-    char* result = (char*)malloc(len + 1);
+    char* result = NULL;
+    result = (char*)malloc(len + 1);
     if (!result) return MSL_ALLOCATION_ERROR;
     
     strcpy(result, path);

@@ -46,5 +46,11 @@ int mmp_remove_mid_hook(module_t*, mid_hook_t*, bool);
 int mmp_remove_hook(module_t*, char*, bool);
 int mmp_remove_inline_hook_from_table(module_t*, inline_hook_t*);
 int mmp_remove_mid_hook_from_table(module_t*, mid_hook_t*);
+int mmp_lookup_inline_hook_by_name(module_t*, char*, inline_hook_t**);
+int mmp_lookup_mid_hook_by_name(module_t*, char*, mid_hook_t**);
+int mmp_create_inline_hook(module_t*, char*, void*, void*, inline_hook_t**);
+int mmp_create_mid_hook(module_t*, char*, void*, void*, mid_hook_t**);
+int mmp_freeze_current_process(void);
+int mmp_resume_current_process(void);
 
 #endif  /* !MEMORY_MANAGEMENT_H_ */
