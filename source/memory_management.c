@@ -11,20 +11,20 @@
 
 module_t* global_initial_image;
 
-int mm_allocate_persistent_memory(size_t size, void** allocation_base)
+int mm_allocate_persistent_memory_alloc(size_t size, void** allocation_base)
 {
     int last_status = MSL_SUCCESS;
-    CHECK_CALL(mm_allocate_memory, global_initial_image, size, allocation_base);
+    CHECK_CALL(mm_allocate_memory_alloc, global_initial_image, size, allocation_base);
     return last_status;
 }
 
-int mm_allocate_memory(module_t* owner, size_t size, void** allocation_base)
+int mm_allocate_memory_alloc(module_t* owner, size_t size, void** allocation_base)
 {
     int last_status = MSL_SUCCESS;
     memory_allocation_t allocation;
     
-    CHECK_CALL(mmp_allocate_memory, size, owner, &allocation);
-    CHECK_CALL(mmp_add_allocation_to_table, allocation);
+    CHECK_CALL(mmp_allocate_memory_alloc, size, owner, &allocation);
+    CHECK_CALL(mmp_add_allocation_to_table, &allocation);
 
     *allocation_base = allocation.allocation_base;
     return last_status;
@@ -166,7 +166,7 @@ int mm_create_mid_function_hook(module_t* module, char* hook_identifier, void* s
 {
     int last_status = MSL_SUCCESS;
     bool flag;
-    CHECK_CALL(m_hook_exists, module, hook_identifier, &flag);
+    CHECK_CALL(mm_hook_exists, module, hook_identifier, &flag);
 
     if (flag) return MSL_OBJECT_ALREADY_EXISTS;
 
@@ -184,4 +184,56 @@ int mm_create_mid_function_hook(module_t* module, char* hook_identifier, void* s
     if (!created_hook->hook_instance) return MSL_INVALID_PARAMETER;
 
     return last_status;
+}
+
+int mmp_allocate_memory_alloc(const size_t allocation_size, module_t* owner_module, memory_allocation_t* allocation)
+{
+    int last_status = MSL_SUCCESS;
+    allocation->allocation_base = malloc(allocation_size);
+    allocation->allocation_size = allocation_size;
+    allocation->owner_module = owner_module;
+
+    return last_status;
+}
+
+int mmp_verify_callback(HMODULE hmodule, void* callback_routine)
+{
+    if (callback_routine && hmodule) return MSL_SUCCESS;
+    return MSL_ACCESS_DENIED;
+}
+
+int mmp_free_memory(module_t* owner_module, void* allocation_base, bool remove_table_entry)
+{
+    int last_status = MSL_SUCCESS;
+    if (remove_table_entry)
+    {
+        CHECK_CALL(mmp_remove_allocations_from_table, owner_module, allocation_base);
+    }
+
+    free(allocation_base);
+    return last_status;
+}
+
+int mmp_add_allocation_to_table(memory_allocation_t* allocation)
+{
+    
+    int last_status = MSL_SUCCESS;
+    CHECK_CALL(ADD_VECTOR(memory_allocation_t), &allocation->owner_module->memory_allocations, allocation);
+    return last_status;
+}
+
+int mmp_is_allocated_memory(module_t* module, void* allocation_base, bool* allocated)
+{
+    memory_allocation_t* mem_alloc = NULL;
+    for (size_t i = 0; i < module->memory_allocations.size; i++)
+    {
+        mem_alloc = &module->memory_allocations.arr[i];
+        if (mem_alloc->allocation_base == allocation_base)
+        {
+            *allocated = true;
+            return MSL_SUCCESS;
+        }
+    }
+    *allocated = false;
+    return MSL_SUCCESS;
 }
