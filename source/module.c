@@ -7,6 +7,7 @@
 #include "../include/object.h"
 #include "../include/pe_parser.h"
 #include "../include/memory_management.h"
+#include "../include/early_launch.h"
 #include "Psapi.h"
 
 #ifdef WIN32
@@ -513,7 +514,7 @@ int md_map_image_ex(const char* image_path, bool is_runtime_load, module_t* modu
         // to call the loaded plugin's ModuleInitialize, as the process isn't yet
         // initialized.
         bool are_we_within_early_launch = false;
-        CHECK_CALL(el_is_process_suspended, are_we_within_early_launch);
+        CHECK_CALL(el_is_process_suspended, &are_we_within_early_launch);
 
         // If we're within early launch, ModuleInitialize should not be called.
         // Instead, it will be called in ArProcessAttach when the module initializes.

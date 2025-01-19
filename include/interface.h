@@ -6,6 +6,7 @@
 #define INTERFACE_H_
 
 #include "Windows.h"
+#include "winternl.h"
 #include "dxgi.h"
 #include "d3d11.h"
 #include "gml_structs.h"
@@ -20,6 +21,8 @@ typedef enum OBJECT_TYPE OBJECT_TYPE;
 typedef enum EVENT_TRIGGERS EVENT_TRIGGERS;
 typedef enum CM_COLOR CM_COLOR;
 typedef enum MODULE_OPERATION_TYPE MODULE_OPERATION_TYPE;
+typedef enum KTHREAD_STATE KTHREAD_STATE;
+typedef enum MSL_KWAIT_REASON MSL_KWAIT_REASON;
 
 typedef union xmm_register xmm_register;
 typedef struct sse_context32_s sse_context32_t;
@@ -37,6 +40,7 @@ typedef struct interface_s interface_t;
 typedef struct interface_impl_s interface_impl_t;
 typedef struct base_object_s base_object_t;
 typedef struct interface_table_entry_s interface_table_entry_t;
+typedef struct system_thread_information_s system_thread_information_t;
 
 typedef int(*Entry)(module_t*,const char*);
 typedef int(*LoaderEntry)(module_t*, int(*pp_get_framework_routine)(const char*, void**), Entry, const char*, module_t*);	
@@ -118,6 +122,68 @@ enum CM_COLOR
     CM_LIGHTPURPLE,
     CM_LIGHTYELLOW,
     CM_BRIGHTWHITE
+};
+
+enum KTHREAD_STATE
+{
+    INITIALIZED,
+    READY,
+    RUNNING,
+    STANDBY,
+    TERMINATED,
+    WAITING,
+    TRANSITION,
+    DEFERREDREADY,
+    GATEWAITOBSOLETE,
+    WAITINGFORPROCESSINSWAP,
+    MAXIMUMTHREADSTATE
+};
+
+enum MSL_KWAIT_REASON
+{
+    EXECUTIVE,
+    FREEPAGE,
+    PAGEIN,
+    POOLALLOCATION,
+    DELAYEXECUTION,
+    SUSPENDED,
+    USERREQUEST,
+    WREXECUTIVE,
+    WRFREEPAGE,
+    WRPAGEIN,
+    WRPOOLALLOCATION,
+    WRDELAYEXECUTION,
+    WRSUSPENDED,
+    WRUSERREQUEST,
+    WREVENTPAIR,
+    WRQUEUE,
+    WRLPCRECEIVE,
+    WRLPCREPLY,
+    WRVIRTUALMEMORY,
+    WRPAGEOUT,
+    WRRENDEZVOUS,
+    WRKEYEDEVENT,
+    WRTERMINATED,
+    WRPROCESSINSWAP,
+    WRCPURATECONTROL,
+    WRCALLOUTSTACK,
+    WRKERNEL,
+    WRRESOURCE,
+    WRPUSHLOCK,
+    WRMUTEX,
+    WRQUANTUMEND,
+    WRDISPATCHINT,
+    WRPREEMPTED,
+    WRYIELDEXECUTION,
+    WRFASTMUTEX,
+    WRGUARDEDMUTEX,
+    WRRUNDOWN,
+    WRALERTBYTHREADID,
+    WRDEFERREDPREEMPT,
+    WRPHYSICALFAULT,
+    WRIORING,
+    WRMDLCACHE,
+    MAXIMUMWAITREASON
 };
 
 union xmm_register 
@@ -509,6 +575,21 @@ struct module_s
 
     // If set, notifies the plugin of any module actions
     ModuleCallback module_operation_callback;
+};
+
+struct system_thread_information_s
+{
+    LARGE_INTEGER KernelTime;
+    LARGE_INTEGER UserTime;
+    LARGE_INTEGER CreateTime;
+    ULONG WaitTime;
+    ULONG_PTR StartAddress;
+    CLIENT_ID ClientId;
+    KPRIORITY Priority;
+    KPRIORITY BasePriority;
+    ULONG ContextSwitches;
+    KTHREAD_STATE ThreadState;
+    MSL_KWAIT_REASON WaitReason;
 };
 
 extern VECTOR(module_t) global_module_list;
