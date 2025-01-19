@@ -174,7 +174,7 @@ int mm_create_mid_function_hook(module_t* module, char* hook_identifier, void* s
 
     // Creates and enables the actual hook
     mid_hook_t* created_hook;
-    CHECK_CALL(mmp_create_midHook, module, hook_identifier, source_address, target_handler, &created_hook);
+    CHECK_CALL(mmp_create_mid_hook, module, hook_identifier, source_address, target_handler, &created_hook);
 
     CHECK_CALL(mmp_resume_current_process);
 
@@ -236,4 +236,129 @@ int mmp_is_allocated_memory(module_t* module, void* allocation_base, bool* alloc
     }
     *allocated = false;
     return MSL_SUCCESS;
+}
+
+int mmp_sigscan_region(const unsigned char* region_base, const size_t region_size, const unsigned char* pattern, const char* pattern_mask, uintptr_t* pattern_base)
+{
+    size_t pattern_size = strlen(pattern_mask);
+
+    // Loop all bytes in the region
+    for (size_t region_byte = 0; region_byte < region_size - pattern_size; region_byte++)
+    {
+        // Loop all bytes in the pattern and compare them to the bytes in the region
+        bool pattern_matches = true;
+        for (size_t in_pattern_byte = 0; in_pattern_byte < pattern_size; in_pattern_byte++)
+        {
+            pattern_matches &= 
+                (pattern_mask[in_pattern_byte] == '?') || 
+                (region_base[region_byte + in_pattern_byte] == pattern[in_pattern_byte]);
+
+            // If it already doesn't match, we don't have to iterate anymore
+            if (!pattern_matches)
+                break;
+        }
+
+        if (pattern_matches)
+        {
+            *pattern_base = (uintptr_t)(region_base + region_byte);
+            return MSL_SUCCESS;
+        }
+    }
+
+    return MSL_OBJECT_NOT_FOUND;
+}
+
+int mmp_remove_allocations_from_table(module_t* owner_module, const void* allocation_base)
+{
+    int last_status = MSL_SUCCESS;
+
+    size_t new_size = owner_module->memory_allocations.size;
+    memory_allocation_t* mem_alloc;
+    for (size_t i = 0; i < owner_module->memory_allocations.size; i++)
+    {
+        mem_alloc = &owner_module->memory_allocations.arr[i];
+        if (mem_alloc->allocation_base == allocation_base)
+        {
+            owner_module->memory_allocations.arr[i] = owner_module->memory_allocations.arr[--new_size];
+            if (!new_size) break;
+        }
+    }
+    owner_module->memory_allocations.size = new_size;
+    return last_status;
+}
+
+int mmp_add_inline_hook_to_table(module_t* owner_module, inline_hook_t* hook)
+{
+    int last_status = MSL_SUCCESS;
+    CHECK_CALL(ADD_VECTOR(inline_hook_t), &owner_module->inline_hooks, hook);
+    return last_status;
+}
+
+int mmp_add_mid_hook_to_table(module_t* owner_module, mid_hook_t* hook)
+{
+    int last_status = MSL_SUCCESS;
+    CHECK_CALL(ADD_VECTOR(mid_hook_t), &owner_module->mid_hooks, hook);
+    return last_status;
+}
+
+int mmp_remove_inline_hook(module_t* module, inline_hook_t* hook, bool remove_from_table)
+{
+    int last_status = MSL_SUCCESS;
+    // Do the unhook atomically
+    CHECK_CALL(mmp_freeze_current_process);
+    hook->hook_instance = shi_init();
+    CHECK_CALL(mmp_resume_current_process);
+
+    if (remove_from_table)
+    {
+        CHECK_CALL(mmp_remove_inline_hook_from_table, module, hook);
+    }
+
+    return last_status;
+}
+
+int mmp_remove_mid_hook(module_t* module, mid_hook_t* hook, bool remove_from_table)
+{
+    int last_status = MSL_SUCCESS;
+    // Do the unhook atomically
+    CHECK_CALL(mmp_freeze_current_process);
+    hook->hook_instance = shm_init();
+    CHECK_CALL(mmp_resume_current_process);
+
+    if (remove_from_table)
+    {
+        CHECK_CALL(mmp_remove_mid_hook_from_table, module, hook);
+    }
+
+    return last_status;
+}
+
+int mmp_remove_hook(module_t* module, char* hook_identifier, bool remove_from_table)
+{
+    int last_status = MSL_SUCCESS;
+
+    // Try to look it up in the inline hook table
+    inline_hook_t* inline_hook_object = NULL;
+    CHECK_CALL(mmp_lookup_inline_hook_by_name, module, hook_identifier, inline_hook_object);
+
+    // If we found it, we can remove it
+    if (inline_hook_object != NULL)
+    {
+        CHECK_CALL(mmp_remove_inline_hook, module, inline_hook_object, remove_from_table);
+        return last_status;
+    }
+
+    // We know it's not an inline hook, so try searching for a midhook
+    mid_hook_t* mid_hook_object = NULL;
+    CHECK_CALL(mmp_lookup_inline_hook_by_name, module, hook_identifier, mid_hook_object);
+
+    // If we found it, remove it
+    if (mid_hook_object != NULL)
+    {
+        CHECK_CALL(mmp_remove_mid_hook, module, mid_hook_object, remove_from_table);
+        return last_status;
+    }
+
+    // Else it's a non-existent hook.
+    return MSL_OBJECT_NOT_FOUND;
 }

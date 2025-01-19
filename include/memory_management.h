@@ -37,5 +37,11 @@ int mmp_verify_callback(HMODULE, void*);
 int mmp_free_memory(module_t*, void*, bool);
 int mmp_add_allocation_to_table(memory_allocation_t*);
 int mmp_is_allocated_memory(module_t*, void*, bool*);
+int mmp_sigscan_region(const unsigned char*, const size_t, const unsigned char*, const char*, uintptr_t*);
+int mmp_remove_allocations_from_table(module_t*, const void*);
+int mmp_add_inline_hook_to_table(module_t*, inline_hook_t*);
+int mmp_add_mid_hook_to_table(module_t*, mid_hook_t*);
+int mmp_remove_inline_hook(module_t*, inline_hook_t*, bool);
+int mmp_remove_hook(module_t*, char*, bool);
 
 #endif  /* !MEMORY_MANAGEMENT_H_ */

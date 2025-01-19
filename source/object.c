@@ -158,9 +158,7 @@ int obp_destroy_interface(module_t* module, interface_base_t* interface_base, bo
         {
             if (module->interface_table.arr[i].intf == interface_base)
             {
-                module->interface_table.arr[i] = module->interface_table.arr[new_size - 1];
-                new_size--;
-
+                module->interface_table.arr[i] = module->interface_table.arr[--new_size];
                 if (!new_size) break;
             }
         }
