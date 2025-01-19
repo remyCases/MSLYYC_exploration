@@ -362,3 +362,43 @@ int mmp_remove_hook(module_t* module, char* hook_identifier, bool remove_from_ta
     // Else it's a non-existent hook.
     return MSL_OBJECT_NOT_FOUND;
 }
+
+static int predicate_inline(inline_hook_t* inline_hook, void* context, bool* flag)
+{
+    int last_status = MSL_SUCCESS;
+    inline_hook_t* hook = (inline_hook_t*)context;
+    *flag = inline_hook == hook;
+    return last_status;
+}
+
+static void destructor_inline(inline_hook_t* inline_hook)
+{
+    shi_destroy(inline_hook->hook_instance);
+}
+
+int mmp_remove_inline_hook_from_table(module_t* module, inline_hook_t* hook)
+{
+    int last_status = MSL_SUCCESS;
+    CHECK_CALL(REMOVE_VECTOR_IF(inline_hook_t), &module->inline_hooks, predicate_inline, hook, destructor_inline);
+    return last_status;
+}
+
+static int predicate_mid(mid_hook_t* mid_hook, void* context, bool* flag)
+{
+    int last_status = MSL_SUCCESS;
+    mid_hook_t* hook = (mid_hook_t*)context;
+    *flag = mid_hook == hook;
+    return last_status;
+}
+
+static void destructor_mid(mid_hook_t* mid_hook)
+{
+    shm_destroy(mid_hook->hook_instance);
+}
+
+int mmp_remove_mid_hook_from_table(module_t* module, mid_hook_t* hook)
+{
+    int last_status = MSL_SUCCESS;
+    CHECK_CALL(REMOVE_VECTOR_IF(mid_hook_t), &module->mid_hooks, predicate_mid, hook, destructor_mid);
+    return last_status;
+}

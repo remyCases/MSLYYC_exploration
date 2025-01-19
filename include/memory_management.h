@@ -42,6 +42,9 @@ int mmp_remove_allocations_from_table(module_t*, const void*);
 int mmp_add_inline_hook_to_table(module_t*, inline_hook_t*);
 int mmp_add_mid_hook_to_table(module_t*, mid_hook_t*);
 int mmp_remove_inline_hook(module_t*, inline_hook_t*, bool);
+int mmp_remove_mid_hook(module_t*, mid_hook_t*, bool);
 int mmp_remove_hook(module_t*, char*, bool);
+int mmp_remove_inline_hook_from_table(module_t*, inline_hook_t*);
+int mmp_remove_mid_hook_from_table(module_t*, mid_hook_t*);
 
 #endif  /* !MEMORY_MANAGEMENT_H_ */
