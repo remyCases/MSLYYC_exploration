@@ -51,6 +51,12 @@ int mdp_mark_module_for_purge(module_t* module)
     return last_status;
 }
 
+static int predicate_purge(module_t* module, void* context, bool* flag)
+{
+    UNREFERENCED_PARAMETER(context);
+    return mdp_is_module_marked_for_purge(module, flag);
+}
+
 int mdp_purge_marked_modules(void)
 {
     int last_status = MSL_SUCCESS;
@@ -71,20 +77,7 @@ int mdp_purge_marked_modules(void)
 
     // Remove the now unloaded modules from our list
     // Note we can't do this in the for loop, since that'd invalidate the iterators
-    size_t new_size = global_module_list.size;
-    for(size_t i = 0; i < global_module_list.size; i++)
-    {
-        module = &global_module_list.arr[i];
-        CHECK_CALL(mdp_is_module_marked_for_purge, module, &purge_flag);
-
-        if (purge_flag)
-        {
-            global_module_list.arr[i] = global_module_list.arr[new_size - 1];
-            new_size--;
-
-            if (!new_size) break;
-        }
-    }
+    CHECK_CALL(REMOVE_VECTOR_IF(module_t), &global_module_list, predicate_purge, NULL, NULL);
     return last_status;
 }
 
@@ -138,6 +131,7 @@ int mdp_map_image(const char* image_path, HMODULE* image_base)
 
 int mdp_build_module_list(const char* base_folder, bool recursive, int(*predicate)(const char*, bool*), VECTOR(str)* files)
 {
+    UNREFERENCED_PARAMETER(recursive);
     int last_status = MSL_SUCCESS;
     files->size= 0;
     char tmp_path[MAX_PATH];
@@ -365,7 +359,8 @@ int mdp_unmap_image(module_t* module, bool remove_from_list, bool call_unload_ro
     // Remove the module from our list if needed
     if (remove_from_list)
     {   
-        CHECK_CALL(REMOVE_VECTOR(module_t), &global_module_list, module);
+        // TODO check destructor
+        CHECK_CALL(REMOVE_VECTOR(module_t), &global_module_list, module, NULL);
     }
 
     return last_status;

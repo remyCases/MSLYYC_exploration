@@ -143,6 +143,14 @@ int obp_create_operation_info(module_t* module, bool is_future_call, operation_i
     return last_status;
 }
 
+static int predicate_destroy_interface(interface_table_entry_t* entry, void* context, bool* predicate)
+{
+    int last_status = MSL_SUCCESS;
+    interface_base_t* interface_base = (interface_base_t*)context;
+    *predicate = entry->intf == interface_base;
+    return last_status;
+}
+
 int obp_destroy_interface(module_t* module, interface_base_t* interface_base, bool notify, bool remove_from_list)
 {
     int last_status = MSL_SUCCESS;
@@ -153,16 +161,8 @@ int obp_destroy_interface(module_t* module, interface_base_t* interface_base, bo
 
     if (remove_from_list)
     {
-        size_t new_size = module->interface_table.size;
-        for(size_t i = 0; i < module->interface_table.size; i++)
-        {
-            if (module->interface_table.arr[i].intf == interface_base)
-            {
-                module->interface_table.arr[i] = module->interface_table.arr[--new_size];
-                if (!new_size) break;
-            }
-        }
-        module->interface_table.size = new_size;
+        // No need for a specific destructor here
+        CHECK_CALL(REMOVE_VECTOR_IF(interface_table_entry_t), &module->interface_table, predicate_destroy_interface, interface_base, NULL);
     }
 
     return last_status;
