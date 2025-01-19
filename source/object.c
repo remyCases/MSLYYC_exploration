@@ -8,15 +8,6 @@
 
 VECTOR(module_t) global_module_list;
 
-int obp_destroy_interface_by_name(const char*);
-int obp_lookup_interface_owner_export(const char*, const char*, void**);
-int obp_get_object_type(base_object_t*, int*);
-int obp_set_module_operation_callback(module_t*, ModuleCallback);
-int obp_add_interface_to_table(module_t*, interface_table_entry_t*);
-int obp_create_operation_info(module_t* module, bool is_future_call, operation_info_t* operation_information);
-int obp_destroy_interface(module_t*, interface_base_t*, bool, bool);
-int obp_lookup_interface_owner(const char*, bool, module_t**, interface_table_entry_t**);
-
 int ob_create_interface(module_t* module, interface_base_t* interface_base, const char* interface_name)
 {
     int last_status = MSL_SUCCESS;
