@@ -286,17 +286,45 @@ int ADD_VECTOR(T)(VECTOR(T)* vec, T* elmt) {        \
 
 #define REMOVE_VECTOR(T) S_CAT_UND(remove, vec, T)
 #define _REMOVE_VECTOR(T)                           \
-int REMOVE_VECTOR(T)(VECTOR(T)* vec, T* elmt) {     \
+int REMOVE_VECTOR(T)(VECTOR(T)* vec, T* elmt, void (*destructor)(T*)) {     \
 	size_t new_size = vec->size;                    \
-    for(size_t i = 0; i < vec->size; i++) {         \
+    for(size_t i = 0; i < vec->size; ) {            \
         if (&vec->arr[i] == elmt) {                 \
             vec->arr[i] = vec->arr[new_size - 1];   \
+            if (destructor != NULL) {               \
+                destructor(&vec->arr[new_size - 1]);\
+            }                                       \
             new_size--;                             \
             if (!new_size) break;                   \
+        } else {                                    \
+            i++;                                    \
         }                                           \
     }                                               \
     vec->size = new_size;                           \
 	return MSL_SUCCESS;                             \
+}
+
+#define REMOVE_VECTOR_IF(T) S_CAT_UND(removeif, vec, T)
+#define _REMOVE_VECTOR_IF(T)                        \
+int REMOVE_VECTOR_IF(T)(VECTOR(T)* vec, int (*predicate)(T*, void*, bool*), void* context, void (*destructor)(T*)) {     \
+	size_t new_size = vec->size;                    \
+	int last_status = MSL_SUCCESS;                  \
+	bool flag;                                      \
+    for(size_t i = 0; i < vec->size; ) {            \
+        CHECK_CALL(predicate, &vec->arr[i], context, &flag);  \
+        if (flag) {                                 \
+            vec->arr[i] = vec->arr[new_size - 1];   \
+            if (destructor != NULL) {               \
+                destructor(&vec->arr[new_size - 1]);\
+            }                                       \
+            new_size--;                             \
+            if (!new_size) break;                   \
+        } else {                                    \
+            i++;                                    \
+        }                                           \
+    }                                               \
+    vec->size = new_size;                           \
+	return last_status;                             \
 }
 
 #define SORT_VECTOR(T) S_CAT_UND(sort, vec, T)
@@ -315,18 +343,20 @@ int SORT_VECTOR(T)(VECTOR(T)* vec, int(*comparator)(const void *, const void *))
     _RESIZE_VECTOR(T)       \
     _ADD_VECTOR(T)          \
     _REMOVE_VECTOR(T)       \
+    _REMOVE_VECTOR_IF(T)    \
     _SORT_VECTOR(T)       
 
 #define DEF_FUNC_VEC(T)                                             \
     int INIT_VECTOR(T)(VECTOR(T)*);                                 \
     int CLEAR_FAST_VECTOR(T)(VECTOR(T)*);                           \
     int CLEAR_SECURE_VECTOR(T)(VECTOR(T)*);                         \
-    int CLEAR_FREE_VECTOR(T)(VECTOR(T)*, void (*destructor)(T*));   \
-    int CLEAR_VECTOR(T)(VECTOR(T)*, void (*destructor)(T*));        \
+    int CLEAR_FREE_VECTOR(T)(VECTOR(T)*, void (*)(T*));             \
+    int CLEAR_VECTOR(T)(VECTOR(T)*, void (*)(T*));                  \
     int RESIZE_VECTOR(T)(VECTOR(T)*);                               \
     int ADD_VECTOR(T)(VECTOR(T)*, T*);                              \
-    int REMOVE_VECTOR(T)(VECTOR(T)*, T*);                           \
-    int SORT_VECTOR(T)(VECTOR(T)*, int(*comparator)(const void *, const void *));                           
+    int REMOVE_VECTOR(T)(VECTOR(T)*, T*, void (*)(T*));             \
+    int REMOVE_VECTOR_IF(T)(VECTOR(T)*, int (*)(T*, void*, bool*), void*, void (*)(T*));\
+    int SORT_VECTOR(T)(VECTOR(T)*, int(*)(const void *, const void *));                           
 
 #define HASH_KEY(K) CAT_UND(HASH_KEY, K)
 #define HASH_KEY_str hash_key_str
