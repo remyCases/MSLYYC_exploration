@@ -6,6 +6,7 @@ Thank you for your interest in contributing to this project! This document provi
 
 This project is a port of Aurie and YYTK from C++ to C99. While it's currently maintained by a single developer, contributions in the form of feedback, code reviews, and pull requests are welcome to help improve the codebase and design decisions.
 
+
 ## Getting Started
 
 ### Prerequisites
