@@ -25,6 +25,7 @@ typedef enum KTHREAD_STATE KTHREAD_STATE;
 typedef enum MSL_KWAIT_REASON MSL_KWAIT_REASON;
 
 typedef union xmm_register xmm_register;
+
 typedef struct sse_context32_s sse_context32_t;
 typedef struct sse_context64_s sse_context64_t;
 typedef struct processor_context64_s processor_context64_t;
