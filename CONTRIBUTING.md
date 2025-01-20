@@ -4,8 +4,7 @@ Thank you for your interest in contributing to this project! This document provi
 
 ## Project Overview
 
-This project is a port of Aurie and YYTK from C++ to C99. While it's currently maintained by a single developer, contributions in the form of feedback, code reviews, and pull requests are welcome to help improve the codebase and design decisions.
-
+This project is a port of [Aurie](https://github.com/AurieFramework/Aurie) and [YYTK](https://github.com/AurieFramework/YYToolkit) from C++ to C99. While it's currently maintained by a single developer, contributions in the form of feedback, code reviews, and pull requests are welcome to help improve the codebase and design decisions.
 
 ## Getting Started
 
@@ -148,7 +147,9 @@ struct interface_base_s
 
 ## Types of Contributions
 
-We welcome all kinds of contributions through pull requests, including:
+Currently the main part of the project is to rewrite YYTK and Aurie in plain C99. we expect contributions to be focused on the port.
+
+However, we welcome all kinds of contributions through pull requests, including:
 - Bug fixes
 - Feature implementations
 - Documentation improvements

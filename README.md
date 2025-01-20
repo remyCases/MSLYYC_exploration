@@ -41,4 +41,4 @@ make run VAR=path/to/file
 
 ## Contributing
 
-Contributions are welcomed, you can find the CONTRIBUTING document that sums up contribution guidelines [here](CONTRIBUTING.md)
+Contributions are welcomed, you can find the CONTRIBUTING document that sums up contribution guidelines [here](CONTRIBUTING.md).
